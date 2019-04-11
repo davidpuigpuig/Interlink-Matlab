@@ -17,8 +17,8 @@ end
 % TLE of a pair of Satellites
 
 % Get TLE parameters autimatically
-tle1 = [0 0 0];
-tle2 = [0 0 0];
+tle1 = "";
+tle2 = "";
 
 % EGYPTSAT 1
 % 1 31117U 07012A 08142.74302347 .00000033 00000-0 13654-4 0 2585
@@ -28,23 +28,28 @@ tle2 = [0 0 0];
 % 1 25063U 97074A 08141.84184490 .00002948 00000-0 41919-4 0 7792
 % 2 25063 034.9668 053.5865 0001034 271.1427 088.9226 15.55875272598945
 
-%% Input parameters 
+%% Input parameters
 
 % Simulation Parameters
 start_time = '22-May-2008 12:00:00';
 start_time_unix = posixtime(datetime(start_time));
-fprintf('Conversion for the desired start time: %s is %d in UNIX time\n', start_time, start_time_unix); 
-t = start_time_unix; % Start simulation time in UNIX time [s]
-t_end = 1211510000; % End of simulation time in UNIX time [s]
+fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix); % Command window print
+start_time_to_log = sprintf('Conversion for the desired simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);
+fprintf(fid, '%s: %s\n', datestr(now, 0), start_time_to_log); % Appending simulation end time to log file
+t = start_time_unix; % Start simulation time in Unix time [s]
+end_time = '23-May-2008 00:00:00';
+end_time_unix = posixtime(datetime(end_time));
+fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix); % Command window print
+end_time_to_log = sprintf('Conversion for the desired end time: %s is %d in Unix time\n', end_time, end_time_unix);
+fprintf(fid, '%s: %s\n', datestr(now, 0), end_time_to_log); % Appending simulation end time to log file
+t_end = end_time_unix; % End of simulation time in Unix time [s]
 increment = 10; % Time increment [s]
 
 % System parameters (Earth)
 body_radius = 6.378e6; % Radius of the primary body [m]
 extra_radius = 20000; % Extra radius for the primary body [m]
 S = body_radius + extra_radius; % Magnitude of the rise-set vector [m]
-%k = 0.01720209895/86400; % Gaussian gravitational constant [rad/day] converted to [rad/s]
-%k = 0.01720209895; % Gaussian gravitational constant [rad]
-k = 1; % Gaussian gravitational constant
+k = 2*pi; % Factor from [rev/s] to [rad/s]
 mu = 3.986004418e14; % Standard gravitational parameter [m^3/s^2]
 
 % Satellite orbit parameters
@@ -61,13 +66,13 @@ seconds1 = abs(minutes1-fix(minutes1))*60;
 hours2 = 0.84184490*24;
 minutes2 = abs(hours2-fix(hours2))*60;
 seconds2 = abs(minutes2-fix(minutes2))*60;
-epoch = [posixtime(datetime('21-May-2008 17:49:57.2278')) posixtime(datetime('20-May-2008 20:12:15.3994'))]; % Epoch from UNIX time [s] 
+epoch = [posixtime(datetime('21-May-2008 17:49:57.2278')) posixtime(datetime('20-May-2008 20:12:15.3994'))]; % Epoch from Unix time [s] 
 T = [epoch(1)-mean_anomaly_tle(1)/mean_motion_tle(1) epoch(2)-mean_anomaly_tle(2)/mean_motion_tle(2)]; % Time of perifocal passage [s]
 semimajor_axis = [mu^(1/3)/(mean_motion_tle(1))^(2/3) mu^(1/3)/(mean_motion_tle(2))^(2/3)]; % Semi-major axis [m]
 eccentricity = [0.0007144 0.0001034]; % Eccentricity [dimensionless]
 periapsis_distance = [semimajor_axis(1)*(1-eccentricity(1)) semimajor_axis(2)*(1-eccentricity(2))]; % Periapsis Distance [m]
 
-% Prellocated variables
+% Preallocated variables
 n = [0 0]; % Unperturbed mean motion [rev/day]
 M = [0 0]; % Mean anomaly [degrees]
 Fn = [0 0]; % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n) [degrees or rad]
@@ -186,7 +191,7 @@ for t=t:increment:t_end % Simulation time and time discretization
 
     result_to_log = sprintf(pair_result,R,datetime(t, 'ConvertFrom', 'posixtime'));
     fprintf(result_to_log); % Command window print
-    fprintf(fid, '%s: %s\n', datestr(now, 0), result_to_log); % Appending R value result to log file
+    fprintf(fid, '%s: %s\n', datestr(now, 0), result_to_log); % Appending R value result and date to log file
 
     if R < 0
         disp(visibility); % Command window print
