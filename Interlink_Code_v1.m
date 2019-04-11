@@ -17,6 +17,8 @@ end
 % TLE of a pair of Satellites
 
 % Get TLE parameters autimatically
+tle1 = [0 0 0];
+tle2 = [0 0 0];
 
 % EGYPTSAT 1
 % 1 31117U 07012A 08142.74302347 .00000033 00000-0 13654-4 0 2585
