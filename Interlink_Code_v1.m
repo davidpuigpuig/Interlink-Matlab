@@ -47,7 +47,7 @@ increment = 10; % Time increment [s]
 
 % System parameters (Earth)
 body_radius = 6.378e6; % Radius of the primary body [m]
-extra_radius = 20000; % Extra radius for the primary body [m]
+extra_radius = 10000; % Extra radius for the primary body [m]
 S = body_radius + extra_radius; % Magnitude of the rise-set vector [m]
 k = 2*pi; % Factor from [rev/s] to [rad/s]
 mu = 3.986004418e14; % Standard gravitational parameter [m^3/s^2]
@@ -66,7 +66,7 @@ seconds1 = abs(minutes1-fix(minutes1))*60;
 hours2 = 0.84184490*24;
 minutes2 = abs(hours2-fix(hours2))*60;
 seconds2 = abs(minutes2-fix(minutes2))*60;
-epoch = [posixtime(datetime('21-May-2008 17:49:57.2278')) posixtime(datetime('20-May-2008 20:12:15.3994'))]; % Epoch from Unix time [s] 
+epoch = [posixtime(datetime('22-May-2008 17:49:57.2278')) posixtime(datetime('21-May-2008 20:12:15.3994'))]; % Epoch from Unix time [s] 
 T = [epoch(1)-mean_anomaly_tle(1)/mean_motion_tle(1) epoch(2)-mean_anomaly_tle(2)/mean_motion_tle(2)]; % Time of perifocal passage [s]
 semimajor_axis = [mu^(1/3)/(mean_motion_tle(1))^(2/3) mu^(1/3)/(mean_motion_tle(2))^(2/3)]; % Semi-major axis [m]
 eccentricity = [0.0007144 0.0001034]; % Eccentricity [dimensionless]
