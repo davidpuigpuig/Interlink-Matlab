@@ -133,12 +133,13 @@ for t=t:increment:t_end % Simulation time and time discretization
             f(i) = 2*atan(C(i));
         elseif eccentricity(i) < 1 && eccentricity(i) >= 0
             En(i) = M(i);
-            while abs(En1(i)-En(i)) > 1e-8
+            error = 1;
+            while error > 1e-8
                 En1(i) = En(i) + (M(i)-eccentricity(i)*sin(En(i))-En(i))/(1-eccentricity(i)*cos(En(i)));
-                En(i) = En(i) + 0.01;
+                error = abs(En1(i)-En(i));
+                En(i) = En1(i);
             end
-            En(i) = En1(i);
-            f(i) = atan((sin(En(i))*sqrt(1-eccentricity(i)^2))/(cos(En(i))-eccentricity(i)))
+            f(i) = atan((sin(En(i))*sqrt(1-eccentricity(i)^2))/(cos(En(i))-eccentricity(i)));
         else
             error('Eccentricity can''t be a negative value')
         end
