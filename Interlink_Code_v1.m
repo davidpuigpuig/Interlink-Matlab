@@ -191,7 +191,6 @@ for t=t:increment:t_end % Simulation time and time discretization
 
     result_to_log = sprintf(pair_result,datetime(t, 'ConvertFrom', 'posixtime'),R);
     fprintf(result_to_log); % Command window print
-    %fprintf(fid, '%s: %s\n', datestr(now, 0), result_to_log); % Appending R value result and date to log file
 
     if R < 0
         disp(visibility); % Command window print
