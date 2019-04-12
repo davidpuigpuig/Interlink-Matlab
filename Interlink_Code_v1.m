@@ -34,14 +34,14 @@ tle2 = "";
 start_time = '22-May-2008 12:00:00';
 start_time_unix = posixtime(datetime(start_time));
 fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix); % Command window print
-start_time_to_log = sprintf('Conversion for the desired simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);
-fprintf(fid, '%s: %s\n', datestr(now, 0), start_time_to_log); % Appending simulation end time to log file
+start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
+fprintf(fid, '%s: %s\n\n', datestr(now, 0), start_time_to_log); % Appending simulation end time to log file
 t = start_time_unix; % Start simulation time in Unix time [s]
 end_time = '23-May-2008 00:00:00';
 end_time_unix = posixtime(datetime(end_time));
 fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix); % Command window print
-end_time_to_log = sprintf('Conversion for the desired end time: %s is %d in Unix time\n', end_time, end_time_unix);
-fprintf(fid, '%s: %s\n', datestr(now, 0), end_time_to_log); % Appending simulation end time to log file
+end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
+fprintf(fid, '%s: %s\n\n', datestr(now, 0), end_time_to_log); % Appending simulation end time to log file
 t_end = end_time_unix; % End of simulation time in Unix time [s]
 increment = 10; % Time increment [s]
 
@@ -185,20 +185,20 @@ for t=t:increment:t_end % Simulation time and time discretization
     R = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*cos(lambda-f(1))+D2*sin(f(2))*cos(psi-f(1)))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+eccentricity(2)*cos(f(2)))^2+parameter(2)^2*(1+eccentricity(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*cos(lambda-f(1))+D2*sin(f(2))*cos(psi-f(1)))*(1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)));
 
     % Step 9: Print Results for the given epoch time 
-    pair_result = 'The result for the pair of satellites is %d at this time: %s ';
+    pair_result = 'The result for the pair of satellites at %s is %d ';
     visibility = '--- Direct line of sight';
     non_visibility= '--- Non-visibility';
 
-    result_to_log = sprintf(pair_result,R,datetime(t, 'ConvertFrom', 'posixtime'));
+    result_to_log = sprintf(pair_result,datetime(t, 'ConvertFrom', 'posixtime'),R);
     fprintf(result_to_log); % Command window print
-    fprintf(fid, '%s: %s\n', datestr(now, 0), result_to_log); % Appending R value result and date to log file
+    %fprintf(fid, '%s: %s\n', datestr(now, 0), result_to_log); % Appending R value result and date to log file
 
     if R < 0
         disp(visibility); % Command window print
-        fprintf(fid, '%s: %s\n', datestr(now, 0), visibility); % Appending visibility analysis result to log file
+        fprintf(fid, '%s: %s%s\n\n', datestr(now, 0), result_to_log, visibility); % Appending visibility analysis result to log file
     else
         disp(non_visibility); % Command window print
-        fprintf(fid, '%s: %s\n', datestr(now, 0), non_visibility); % Appending visibility analysis result to log file
+        fprintf(fid, '%s: %s%s\n\n', datestr(now, 0), result_to_log, non_visibility); % Appending visibility analysis result to log file
     end
 
 end
