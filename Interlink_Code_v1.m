@@ -121,8 +121,10 @@ for t=t:increment:t_end % Simulation time and time discretization
         % Step 3 - Finding true anomaly 
         if eccentricity(i) > 1
             Fn(i) = 6*M(i);
-            while abs(Fn1(i)-Fn(i))> 1e-8
+            error = 1;
+            while error > 1e-8
                 Fn1(i) = Fn(i) + (M(i)-eccentricity(i)*sinh(Fn(i))+Fn(i))/(eccentricity(i)*cosh(Fn(i))-1);
+                error = abs(Fn1(i)-Fn(i));
                 Fn(i) = Fn1(i);
             end
             f(i) = atan((-sinh(Fn(i))*sqrt(eccentricity(i)^2-1))/(cosh(Fn(i))-eccentricity(i)));
@@ -147,7 +149,7 @@ for t=t:increment:t_end % Simulation time and time discretization
         % Step 4 - Finding primary body center to satellite distance
         r(i) = (1+eccentricity(i))*periapsis_distance(i)/(1+eccentricity(i)*cos(f(i)));
 
-        % Step 5 - Finding reference vectors
+        % Step 5 - Finding standard orientation vectors
         Px(i) = cos(argument_periapsis(i))*cos(longitude_ascending_node(i))-sin(argument_periapsis(i))*sin(longitude_ascending_node(i))*cos(inclination(i));
         Py(i) = cos(argument_periapsis(i))*sin(longitude_ascending_node(i))+sin(argument_periapsis(i))*cos(longitude_ascending_node(i))*cos(inclination(i));
         Pz(i) = sin(argument_periapsis(i))*sin(inclination(i));
@@ -164,11 +166,13 @@ for t=t:increment:t_end % Simulation time and time discretization
         for j=1:3
             r_vector(i,j) = r_fullvector(j);
         end
-
-        % Step 8 - Solving visibility equation
+        
+        % Step 8 - Finding Parameter or Semi-parameter
         parameter(i) = semimajor_axis(i)*(1-eccentricity(i)^2);
-
+        
     end
+    
+    % Step 9 - Solving visibility equation
 
     P1 = [Px(1) Py(1) Pz(1)];
     P2 = [Px(2) Py(2) Pz(2)];
