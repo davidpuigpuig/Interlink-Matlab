@@ -145,15 +145,15 @@ for t=t:increment:t_end % Simulation time and time discretization
                 Einicial = M(i) - eccentricity(i)/2;
             end
             E = Einicial;
-            TOL = 10;
-            while TOL > 1.001
+            TOL = 1;
+            while TOL > 1e-8
                 fdee = E - eccentricity(i)*sin(E)-M(i);
                 fprimadee = 1-eccentricity(i)*cos(E);
                 TOL = abs(fdee/fprimadee);
                 En(i)=E;
                 E=E-fdee/fprimadee;
             end
-            f(i) = atan((sin(En(i))*sqrt(1-eccentricity(i)^2))/(cos(En(i))-eccentricity(i)));
+            f(i) = atan((sin(En(i))*sqrt(1-eccentricity(i)^2))/(cos(En(i))-eccentricity(i))); % TODO
         else
             error('Eccentricity can''t be a negative value')
         end
