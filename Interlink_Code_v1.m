@@ -92,7 +92,8 @@ eta = [0 0]; % Component of r_vector in the descending node line [m]
 r_fullvector = [0 0 0]; % Intermediate vector to store the pair of r_vectors [m]
 r_vector = [0 0 0; 0 0 0]; % Vector from the center of the primary body to the satellite [m]
 parameter = [0 0]; % Semi-parameter of the orbit [m]
-R = 0; % Visibility parameter [m]
+R1 = 0; % Visibility parameter [m]
+R2 = 0; % Visibility parameter [m]
 
 %% Algorithm
 
@@ -107,6 +108,7 @@ for t=t:increment:t_end % Simulation time and time discretization
             n(i) = k*sqrt(mu/(2*periapsis_distance(i)^3));
         elseif eccentricity(i) < 1 && eccentricity(i) >= 0
             n(i) = k*sqrt(mu/semimajor_axis(i)^3);
+            % n(i) = mean_motion_tle(i);
         else
             error('Eccentricity can''t be a negative value')
         end
@@ -130,12 +132,26 @@ for t=t:increment:t_end % Simulation time and time discretization
             C(i) = B(i)-1/B(i);
             f(i) = 2*atan(C(i));
         elseif eccentricity(i) < 1 && eccentricity(i) >= 0
-            En(i) = M(i);
-            error = 1;
-            while error > 1e-8
-                En1(i) = En(i) + (M(i)-eccentricity(i)*sin(En(i))-En(i))/(1-eccentricity(i)*cos(En(i)));
-                error = abs(En1(i)-En(i));
-                En(i) = En1(i);
+            % En(i) = M(i);
+            % error = 1;
+            % while error > 1e-8
+                % En1(i) = En(i) + (M(i)-eccentricity(i)*sin(En(i))-En(i))/(1-eccentricity(i)*cos(En(i)));
+                % error = abs(En1(i)-En(i));
+                % En(i) = En1(i);
+                % end
+            if M(i) < pi % careful with negatives
+                Einicial = M(i) + eccentricity(i)/2;
+            else 
+                Einicial = M(i) - eccentricity(i)/2;
+            end
+            E = Einicial;
+            TOL = 10;
+            while TOL > 1.001
+                fdee = E - eccentricity(i)*sin(E)-M(i);
+                fprimadee = 1-eccentricity(i)*cos(E);
+                TOL = abs(fdee/fprimadee);
+                En(i)=E;
+                E=E-fdee/fprimadee;
             end
             f(i) = atan((sin(En(i))*sqrt(1-eccentricity(i)^2))/(cos(En(i))-eccentricity(i)));
         else
@@ -179,23 +195,32 @@ for t=t:increment:t_end % Simulation time and time discretization
     A3 = dot(P1,Q2);
     A4 = dot(Q1,Q2);
 
-    lambda = asin(A2/sqrt(A1^2+A2^2));
+    gamma = asin(A2/sqrt(A1^2+A2^2));
     psi = asin(A4/sqrt(A3^2+A4^2));
 
+    sin_gamma = A2/sqrt(A1^2+A2^2);
+    cos_gamma = A1/sqrt(A1^2+A2^2);
+    sin_psi = A4/sqrt(A3^2+A4^2);
+    cos_psi = A3/sqrt(A3^2+A4^2);
+    
     D1 = sqrt(A1^2+A2^2);
     D2 = sqrt(A3^2+A4^2);
-
-    R = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*cos(lambda-f(1))+D2*sin(f(2))*cos(psi-f(1)))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+eccentricity(2)*cos(f(2)))^2+parameter(2)^2*(1+eccentricity(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*cos(lambda-f(1))+D2*sin(f(2))*cos(psi-f(1)))*(1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)));
-
+    
+    % cos(gamma-f(1)) == cos(gamma)*cos(f(1))+sin(gamma)*sin(f(1)) == ((A1/sqrt(A1^2+A2^2))*cos(f(1))+(A2/sqrt(A1^2+A2^2))*sin(f(1)))      
+    % cos(psi-f(1))) == cos(psi)*cos(f(1))+sin(psi)*sin(f(1)) == ((A4/sqrt(A3^2+A4^2))*cos(f(1))+(A4/sqrt(A3^2+A4^2))*sin(f(1)))
+    
+    % R1 = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+eccentricity(2)*cos(f(2)))^2+parameter(2)^2*(1+eccentricity(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))*(1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)));
+    R2 = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*((A1/sqrt(A1^2+A2^2))*cos(f(1))+(A2/sqrt(A1^2+A2^2))*sin(f(1)))+D2*sin(f(2))*((A3/sqrt(A3^2+A4^2))*cos(f(1))+(A4/sqrt(A3^2+A4^2))*sin(f(1))))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+eccentricity(2)*cos(f(2)))^2+parameter(2)^2*(1+eccentricity(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*((A1/sqrt(A1^2+A2^2))*cos(f(1))+(A2/sqrt(A1^2+A2^2))*sin(f(1)))+D2*sin(f(2))*((A3/sqrt(A3^2+A4^2))*cos(f(1))+(A4/sqrt(A3^2+A4^2))*sin(f(1))))*(1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)));
+    
     % Step 9: Print Results for the given epoch time 
     pair_result = 'The result for the pair of satellites at %s is %d ';
     visibility = '--- Direct line of sight';
     non_visibility= '--- Non-visibility';
 
-    result_to_log = sprintf(pair_result,datetime(t, 'ConvertFrom', 'posixtime'),R);
+    result_to_log = sprintf(pair_result,datetime(t, 'ConvertFrom', 'posixtime'),R2);
     fprintf(result_to_log); % Command window print
 
-    if R < 0
+    if R2 < 0
         disp(visibility); % Command window print
         fprintf(fid, '%s: %s%s\n\n', datestr(now, 0), result_to_log, visibility); % Appending visibility analysis result to log file
     else
