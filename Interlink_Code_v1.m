@@ -92,8 +92,10 @@ eta = [0 0]; % Component of r_vector in the descending node line [m]
 r_fullvector = [0 0 0]; % Intermediate vector to store the pair of r_vectors [m]
 r_vector = [0 0 0; 0 0 0]; % Vector from the center of the primary body to the satellite [m]
 parameter = [0 0]; % Semi-parameter of the orbit [m]
-R1 = 0; % Visibility parameter [m]
-R2 = 0; % Visibility parameter [m]
+Rsimple1 = 0; % Visibility parameter [m]
+Rsimple2 = 0; % Visibility parameter [m]
+Rcomplex = 0; % Visibility parameter [m]
+Rangle = 0; % Visibility parameter [m]
 
 %% Algorithm
 
@@ -181,7 +183,6 @@ for t=t:increment:t_end % Simulation time and time discretization
         
         % Step 8 - Finding Parameter or Semi-parameter
         parameter(i) = semimajor_axis(i)*(1-eccentricity(i)^2);
-        
     end
     
     % Step 9 - Solving visibility equation
@@ -195,8 +196,11 @@ for t=t:increment:t_end % Simulation time and time discretization
     A3 = dot(P1,Q2);
     A4 = dot(Q1,Q2);
 
-    gamma = asin(A2/sqrt(A1^2+A2^2));
-    psi = asin(A4/sqrt(A3^2+A4^2));
+    gamma1 = asin(A2/sqrt(A1^2+A2^2));
+    psi1 = asin(A4/sqrt(A3^2+A4^2));
+    
+    gamma2 = acos(A1/sqrt(A1^2+A2^2));
+    psi2 = acos(A3/sqrt(A3^2+A4^2));
 
     sin_gamma = A2/sqrt(A1^2+A2^2);
     cos_gamma = A1/sqrt(A1^2+A2^2);
@@ -206,21 +210,22 @@ for t=t:increment:t_end % Simulation time and time discretization
     D1 = sqrt(A1^2+A2^2);
     D2 = sqrt(A3^2+A4^2);
     
-    % cos(gamma-f(1)) == cos(gamma)*cos(f(1))+sin(gamma)*sin(f(1)) == ((A1/sqrt(A1^2+A2^2))*cos(f(1))+(A2/sqrt(A1^2+A2^2))*sin(f(1)))      
-    % cos(psi-f(1))) == cos(psi)*cos(f(1))+sin(psi)*sin(f(1)) == ((A4/sqrt(A3^2+A4^2))*cos(f(1))+(A4/sqrt(A3^2+A4^2))*sin(f(1)))
-    
-    % R1 = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+eccentricity(2)*cos(f(2)))^2+parameter(2)^2*(1+eccentricity(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))*(1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)));
-    R2 = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*((A1/sqrt(A1^2+A2^2))*cos(f(1))+(A2/sqrt(A1^2+A2^2))*sin(f(1)))+D2*sin(f(2))*((A3/sqrt(A3^2+A4^2))*cos(f(1))+(A4/sqrt(A3^2+A4^2))*sin(f(1))))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+eccentricity(2)*cos(f(2)))^2+parameter(2)^2*(1+eccentricity(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*((A1/sqrt(A1^2+A2^2))*cos(f(1))+(A2/sqrt(A1^2+A2^2))*sin(f(1)))+D2*sin(f(2))*((A3/sqrt(A3^2+A4^2))*cos(f(1))+(A4/sqrt(A3^2+A4^2))*sin(f(1))))*(1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)));
+    % r1dotr2simple = (parameter(1)*parameter(2)/((1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)))))*(A1*cos(f(1))*cos(f(2))+A3*cos(f(1))*sin(f(2))+A2*sin(f(1))*cos(f(2))+A4*sin(f(1))*sin(f(2)));
+    % r1dotr2complex = (parameter(1)*parameter(2)/((1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)))))*(D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1)))+D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))));
+    % Rsimple1 = r1dotr2simple^2 - r(2)^2*r(1)^2 + (r(2)^2 + r(1)^2)*S^2 - 2*S^2*(r1dotr2simple);
+    % Rsimple2 = r1dotr2complex^2 - r(2)^2*r(1)^2 + (r(2)^2 + r(1)^2)*S^2 - 2*S^2*(r1dotr2complex);
+    Rcomplex = parameter(1)^2 * parameter(2)^2 * ( D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1))) + D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))) )^2 - parameter(1)^2*parameter(2)^2 + S^2*( parameter(1)^2*(1+eccentricity(2)*cos(f(2)))^2 + parameter(2)^2*(1+eccentricity(1)*cos(f(1)))^2 ) - 2*S^2*parameter(1)*parameter(2)* ( D1*cos(f(2))* ( cos_gamma*cos(f(1))+sin_gamma*sin(f(1)) ) + D2*sin(f(2))* ( cos_psi*cos(f(1))+sin_psi*sin(f(1)) ) ) * (1+eccentricity(1)*cos(f(1))) * (1+eccentricity(2)*cos(f(2)));
+    % Rangle = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+eccentricity(2)*cos(f(2)))^2+parameter(2)^2*(1+eccentricity(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))*(1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)));
     
     % Step 9: Print Results for the given epoch time 
     pair_result = 'The result for the pair of satellites at %s is %d ';
     visibility = '--- Direct line of sight';
     non_visibility= '--- Non-visibility';
 
-    result_to_log = sprintf(pair_result,datetime(t, 'ConvertFrom', 'posixtime'),R2);
+    result_to_log = sprintf(pair_result,datetime(t, 'ConvertFrom', 'posixtime'),Rcomplex);
     fprintf(result_to_log); % Command window print
 
-    if R2 < 0
+    if Rcomplex < 0
         disp(visibility); % Command window print
         fprintf(fid, '%s: %s%s\n\n', datestr(now, 0), result_to_log, visibility); % Appending visibility analysis result to log file
     else
