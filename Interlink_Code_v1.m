@@ -2,12 +2,6 @@ format long
 close all
 clc
 
-fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', 'log_file.txt'), 'w'); % Create log file overwriting old one
-fid_log = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', 'log_file.txt'), 'a'); % Setting log file to append mode
-if fid_log == -1
-  error('Cannot open log file.');
-end
-
 % STUDY OF THE INTERLINK BETWEEN SMALL SATELLITES IN A CONSTELLATION
 % Author: David Puig Puig
 
@@ -190,6 +184,19 @@ elseif indx == 3
         disp('User selected Cancel');
         return
     end
+end
+
+prompt = 'Name this analysis: Log file will be yyyymmddHHMMSS-Name.txt';
+dlgtitle = 'Log file name';
+dims = [1 70];
+name_log = inputdlg(prompt,dlgtitle,dims);
+date_log = datestr(now,'yyyymmddHHMMSS');
+full_name_log = sprintf('%s-%s.txt',date_log,name_log{1});
+
+fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', full_name_log), 'w'); % Create log file overwriting old one
+fid_log = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', full_name_log), 'a'); % Setting log file to append mode
+if fid_log == -1
+  error('Cannot open log file.');
 end
 
 tic; % Runtime start
