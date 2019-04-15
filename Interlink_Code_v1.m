@@ -70,6 +70,7 @@ eccentricity = [0.0007144 0.0001034]; % Eccentricity [dimensionless]
 periapsis_distance = [semimajor_axis(1)*(1-eccentricity(1)) semimajor_axis(2)*(1-eccentricity(2))]; % Periapsis Distance [m]
 
 % Preallocated variables
+
 n = [0 0]; % Unperturbed mean motion [rev/day]
 M = [0 0]; % Mean anomaly [degrees]
 Fn = [0 0]; % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n) [degrees or rad]
@@ -109,14 +110,15 @@ for t=t:increment:t_end % Simulation time and time discretization
         elseif eccentricity(i) == 1
             n(i) = k*sqrt(mu/(2*periapsis_distance(i)^3));
         elseif eccentricity(i) < 1 && eccentricity(i) >= 0
-            n(i) = k*sqrt(mu/semimajor_axis(i)^3);
-            % n(i) = mean_motion_tle(i);
+            % n(i) = k*sqrt(mu/semimajor_axis(i)^3);
+            n(i) = mean_motion_tle(i);
         else
             error('Eccentricity can''t be a negative value')
         end
 
         % Step 2 - Solving Mean Anomaly
-        M(i) = n(i)*(t-T(i));
+        % M(i) = n(i)*(t-T(i));
+        M(i) = mean_anomaly_tle(i) + n(i)*(t-start_time_unix);
 
         % Step 3 - Finding true anomaly 
         if eccentricity(i) > 1
@@ -134,13 +136,13 @@ for t=t:increment:t_end % Simulation time and time discretization
             C(i) = B(i)-1/B(i);
             f(i) = 2*atan(C(i));
         elseif eccentricity(i) < 1 && eccentricity(i) >= 0
-            % En(i) = M(i);
-            % error = 1;
-            % while error > 1e-8
-                % En1(i) = En(i) + (M(i)-eccentricity(i)*sin(En(i))-En(i))/(1-eccentricity(i)*cos(En(i)));
-                % error = abs(En1(i)-En(i));
-                % En(i) = En1(i);
-                % end
+%             En(i) = M(i);
+%             error = 1;
+%             while error > 1e-8
+%                 En1(i) = En(i) + (M(i)-eccentricity(i)*sin(En(i))-En(i))/(1-eccentricity(i)*cos(En(i)));
+%                 error = abs(En1(i)-En(i));
+%                 En(i) = En1(i);
+%             end
             if M(i) < pi % careful with negatives
                 Einicial = M(i) + eccentricity(i)/2;
             else 
