@@ -26,7 +26,7 @@ end
 % 2 25063 034.9668 053.5865 0001034 271.1427 088.9226 15.55875272598945
 
 % Input TLE choice module
-input_tle_list = {'Hard-coded examples', 'File', 'Paste'};
+input_tle_list = {'Examples', 'From file', 'Paste'};
 [indx,tf] = listdlg('ListString',input_tle_list,'Name','Two Line Element Input Choice','PromptString','Select a TLE input mode:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
@@ -35,7 +35,7 @@ if tf == 0
 end
 
 if indx == 1
-    input_examples_list = {'1', '2', '3', '4', '5'};
+    input_examples_list = {'EGYPTSAT 1', 'TRMM', 'GOES 3', 'NOAA 3', 'NAVSTAR 46'};
     [indx,tf] = listdlg('ListString',input_examples_list,'Name','Two Line Element Input Choice','PromptString','Select two or more TLE to analyse:','SelectionMode','multiple','ListSize',[500,300],'OKString','Run','CancelString','Quit');
     if tf == 0
         disp('User selected Quit');
