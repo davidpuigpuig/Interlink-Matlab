@@ -1,12 +1,10 @@
-tic; % Runtime start
-
 format long
 close all
 clc
 
 fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', 'log_file.txt'), 'w'); % Create log file overwriting old one
-fid = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', 'log_file.txt'), 'a'); % Setting log file to append mode
-if fid == -1
+fid_log = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', 'log_file.txt'), 'a'); % Setting log file to append mode
+if fid_log == -1
   error('Cannot open log file.');
 end
 
@@ -30,7 +28,7 @@ input_tle_list = {'Examples', 'From file', 'Paste'};
 [indx,tf] = listdlg('ListString',input_tle_list,'Name','Two Line Element Input Choice','PromptString','Select a TLE input mode:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
-    disp('User selected Cancel');
+    disp('User selected Quit');
     return
 end
 
@@ -58,6 +56,52 @@ elseif indx == 2
             return
         else
             disp(['User selected ', fullfile(path,file)]);
+            % TLE file name 
+            fid_input = fopen(fullfile(path,file));
+            L1c = fscanf(fid_input,'%24c%',1);
+            L2c = fscanf(fid_input,'%71c%',1);
+            L3c = fscanf(fid_input,'%71c%',1);
+            fprintf(L1c);
+            fprintf(L2c);
+            fprintf([L3c,'\n']);
+            fclose(fid_input);
+            % Open the TLE file and read TLE elements
+            fid_input = fopen(fullfile(path,file));
+            L1 = fscanf(fid_input,'%24c%*s',1);
+            L2 = fscanf(fid_input,'%d%6d%*c%5d%*3c%*2f%f%f%5d%*c%*d%5d%*c%*d%d%5d',[1,9]);
+            L3 = fscanf(fid_input,'%d%6d%f%f%f%f%f%f%f',[1,8]);
+            fclose(fid_input);
+
+            epoch = L2(1,4)*24*3600;        % Epoch Date and Julian Date Fraction
+            Db    = L2(1,5);                % Ballistic Coefficient
+            inc   = L3(1,3);                % Inclination [deg]
+            RAAN  = L3(1,4);                % Right Ascension of the Ascending Node [deg]
+            e     = L3(1,5)/1e7;            % Eccentricity 
+            w     = L3(1,6);                % Argument of periapsis [deg]
+            M     = L3(1,7);                % Mean anomaly [deg]
+            n     = L3(1,8);                % Mean motion [Revs per day]
+
+            % Orbital elements
+
+            a = (mu/(n*2*pi/(24*3600))^2)^(1/3);     % Semi-major axis [km]    
+
+            % Calculate the eccentric anomaly using Mean anomaly
+            err = 1e-10;            %Calculation Error
+            E0 = M; t =1;
+            itt = 0;
+            while(t) 
+                   E =  M + e*sind(E0);
+                  if ( abs(E - E0) < err)
+                      t = 0;
+                  end
+                  E0 = E;
+                  itt = itt+1;
+            end
+
+            % Six orbital elements 
+            OE = [a e inc RAAN w E];
+            fprintf('\n a [km]   e      inc [deg]  RAAN [deg]  w[deg]    E [deg] \n ')
+            fprintf('%4.2f  %4.4f   %4.4f       %4.4f     %4.4f    %4.4f', OE);
         end
     elseif indx == 2
         [file,path] = uigetfile('*.csv');
@@ -66,6 +110,53 @@ elseif indx == 2
             return
         else
             disp(['User selected ', fullfile(path,file)]);
+            % TLE file name 
+            fid_input = fopen(fullfile(path,file));
+            L1c = fscanf(fid_input,'%24c%',1);
+            L2c = fscanf(fid_input,'%71c%',1);
+            L3c = fscanf(fid_input,'%71c%',1);
+            fprintf(L1c);
+            fprintf(L2c);
+            fprintf([L3c,'\n']);
+            fclose(fid_input);
+            % Open the TLE file and read TLE elements
+            fid_input = fopen(fullfile(path,file));
+            L1 = fscanf(fid_input,'%24c%*s',1);
+            L2 = fscanf(fid_input,'%d%6d%*c%5d%*3c%*2f%f%f%5d%*c%*d%5d%*c%*d%d%5d',[1,9]);
+            L3 = fscanf(fid_input,'%d%6d%f%f%f%f%f%f%f',[1,8]);
+            fclose(fid_input);
+
+            epoch = L2(1,4)*24*3600;        % Epoch Date and Julian Date Fraction
+            Db    = L2(1,5);                % Ballistic Coefficient
+            inc   = L3(1,3);                % Inclination [deg]
+            RAAN  = L3(1,4);                % Right Ascension of the Ascending Node [deg]
+            e     = L3(1,5)/1e7;            % Eccentricity 
+            w     = L3(1,6);                % Argument of periapsis [deg]
+            M     = L3(1,7);                % Mean anomaly [deg]
+            n     = L3(1,8);                % Mean motion [Revs per day]
+
+            % Orbital elements
+
+            a = (mu/(n*2*pi/(24*3600))^2)^(1/3);     % Semi-major axis [km]    
+
+            % Calculate the eccentric anomaly using Mean anomaly
+            err = 1e-10;            %Calculation Error
+            E0 = M; t =1;
+            itt = 0;
+            while(t) 
+                   E =  M + e*sind(E0);
+                  if ( abs(E - E0) < err)
+                      t = 0;
+                  end
+                  E0 = E;
+                  itt = itt+1;
+            end
+
+            % Six orbital elements 
+            OE = [a e inc RAAN w E];
+            fprintf('\n a [km]   e      inc [deg]  RAAN [deg]  w[deg]    E [deg] \n ')
+            fprintf('%4.2f  %4.4f   %4.4f       %4.4f     %4.4f    %4.4f', OE);
+        
         end
     end
 elseif indx == 3
@@ -100,7 +191,9 @@ elseif indx == 3
         return
     end
 end
-    
+
+tic; % Runtime start
+
 %% Input parameters
 
 % Simulation Parameters
@@ -108,13 +201,13 @@ start_time = '22-May-2008 12:00:00';
 start_time_unix = posixtime(datetime(start_time));
 fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix); % Command window print
 start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
-fprintf(fid, '%s: %s\n\n', datestr(now, 0), start_time_to_log); % Appending simulation end time to log file
+fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), start_time_to_log); % Appending simulation end time to log file
 t = start_time_unix; % Start simulation time in Unix time [s]
 end_time = '23-May-2008 00:00:00';
 end_time_unix = posixtime(datetime(end_time));
 fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix); % Command window print
 end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
-fprintf(fid, '%s: %s\n\n', datestr(now, 0), end_time_to_log); % Appending simulation end time to log file
+fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), end_time_to_log); % Appending simulation end time to log file
 t_end = end_time_unix; % End of simulation time in Unix time [s]
 increment = 10; % Time increment [s]
 
@@ -311,14 +404,14 @@ for t=t:increment:t_end % Simulation time and time discretization
 
     if Rcomplex < 0
         disp(visibility); % Command window print
-        fprintf(fid, '%s: %s%s\n\n', datestr(now, 0), result_to_log, visibility); % Appending visibility analysis result to log file
+        fprintf(fid_log, '%s: %s%s\n\n', datestr(now, 0), result_to_log, visibility); % Appending visibility analysis result to log file
     else
         disp(non_visibility); % Command window print
-        fprintf(fid, '%s: %s%s\n\n', datestr(now, 0), result_to_log, non_visibility); % Appending visibility analysis result to log file
+        fprintf(fid_log, '%s: %s%s\n\n', datestr(now, 0), result_to_log, non_visibility); % Appending visibility analysis result to log file
     end
 
 end
 
-fclose(fid); % Closing log file
+fclose(fid_log); % Closing log file
 
 toc; % Runtime end
