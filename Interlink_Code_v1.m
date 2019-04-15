@@ -20,7 +20,7 @@ clc
 %% Menu module
 
 % Input TLE choice module
-input_tle_list = {'Examples', 'From file', 'Paste'};
+input_tle_list = {'Examples', 'From .txt file', 'Paste'};
 [indx,tf] = listdlg('ListString',input_tle_list,'Name','Two Line Element Input Choice','PromptString','Select a TLE input mode:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
@@ -38,154 +38,124 @@ if indx == 1
     if size(indx) == 1
         return
     end
+    
 elseif indx == 2
-    input_file_list = {'.txt file', '.csv file'};
-    [indx,tf] = listdlg('ListString',input_file_list,'Name','Two Line Element Input Choice','PromptString','Select a TLE input file:','SelectionMode','single','ListSize',[500,300],'OKString','Select','CancelString','Quit');
-    if tf == 0
-        disp('User selected Quit');
+
+    [file,path] = uigetfile('*.txt');
+
+    if isequal(file,0)
+        disp('User selected Cancel');
         return
-    end
-    if indx == 1
-        [file,path] = uigetfile('*.txt');
-        if isequal(file,0)
-            disp('User selected Cancel');
-            return
-        else
-            disp(['User selected ', fullfile(path,file)]);
-            % TLE file name 
-            fid_input = fopen(fullfile(path,file));
-            L1c = fscanf(fid_input,'%24c%',1);
-            L2c = fscanf(fid_input,'%71c%',1);
-            L3c = fscanf(fid_input,'%71c%',1);
-            fprintf(L1c);
-            fprintf(L2c);
-            fprintf([L3c,'\n']);
-            fclose(fid_input);
-            % Open the TLE file and read TLE elements
-            fid_input = fopen(fullfile(path,file));
-            L1 = fscanf(fid_input,'%24c%*s',1);
-            L2 = fscanf(fid_input,'%d%6d%*c%5d%*3c%*2f%f%f%5d%*c%*d%5d%*c%*d%d%5d',[1,9]);
-            L3 = fscanf(fid_input,'%d%6d%f%f%f%f%f%f%f',[1,8]);
-            fclose(fid_input);
+    
+    else
+        disp(['User selected ', fullfile(path,file)]);
+        % TLE file name 
+        %fid_input = fopen(fullfile(path,file));
+        fid_input = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Input Files','iridium.txt'));
+        txt_data = textscan(fid_input,'%s %s %s %s %s %s %s %s %s');
+        mu = 3.986004418e14; % Standard gravitational parameter [m^3/s^2]
 
-            epoch = L2(1,4)*24*3600;        % Epoch Date and Julian Date Fraction
-            Db    = L2(1,5);                % Ballistic Coefficient
-            inc   = L3(1,3);                % Inclination [deg]
-            RAAN  = L3(1,4);                % Right Ascension of the Ascending Node [deg]
-            e     = L3(1,5)/1e7;            % Eccentricity 
-            w     = L3(1,6);                % Argument of periapsis [deg]
-            M     = L3(1,7);                % Mean anomaly [deg]
-            n     = L3(1,8);                % Mean motion [Revs per day]
+        % Find the total number of satellites in the file
+        num_satellites = length(txt_data{1})/3;
 
-            % Orbital elements
+        % Initialize array
+        sat_id_line = zeros(1,num_satellites);
+        line_count = 1;
+        for i=1:num_satellites
+            % Take every 3rd line
+            sat_id_line(i) = line_count;
 
-            a = (mu/(n*2*pi/(24*3600))^2)^(1/3);     % Semi-major axis [km]    
+            OrbitData.ID(i) = txt_data{1}(line_count);
+            OrbitData.designation(i) = txt_data{2}(line_count);
+            OrbitData.PRN(i) = txt_data{3}(line_count);
 
-            % Calculate the eccentric anomaly using Mean anomaly
-            err = 1e-10;            %Calculation Error
-            E0 = M; t =1;
-            itt = 0;
-            while(t) 
-                   E =  M + e*sind(E0);
-                  if ( abs(E - E0) < err)
-                      t = 0;
-                  end
-                  E0 = E;
-                  itt = itt+1;
+            line_count  = line_count + 3; % Jump to the next Satellite Name line
+        end
+
+        % Find the two lines corresponding to the spacecraft in question
+        for j=1:length(sat_id_line)
+            % Find the first line of the first satellite
+            index = sat_id_line(j);
+
+            % Translate two line element data into obital elements
+            OrbitData.i(j)     = str2double(txt_data{1,3}{index+2});      % [deg]
+            OrbitData.RAAN(j)  = str2double(txt_data{1,4}{index+2});      % [deg]
+            OrbitData.omega(j) = str2double(txt_data{1,6}{index+2});      % [deg]
+            OrbitData.M(j)     = str2double(txt_data{1,7}{index+2});      % [deg]
+            n                  = str2double(txt_data{1,8}{index+2});      % [rev/day]
+            n                  = n*2*pi/24/60/60;                         % [rad/s]
+            OrbitData.a(j)     = ( mu / n^2 )^(1/3);                      % [m]
+            OrbitData.e(j)     = str2double(txt_data{1,5}{index+2})*1e-7; % [unitless]
+
+            % Compute the UTC date / time
+            temp2             = txt_data{1,4}{index+1};
+            yy                = str2double(temp2(1:2));
+            yyyy              = 2000 + yy;
+            start             = datenum([yyyy 0 0 0 0 0]);
+            secs              = str2double(temp2(3:length(temp2)))*24*3600-2*24*3600;
+            date1             = datevec(addtodate(start,floor(secs),'second'));
+            remainder         = [0 0 0 0 0 mod(secs,1)];
+            OrbitData.date{j} = datestr(date1+remainder,'dd-mmm-yyyy HH:MM:SS.FFF');
+
+            % Compute ballistic coefficient in SI units
+            temp3 = txt_data{1,7}{index+1};
+            if length(temp3) == 7
+                base  = str2double(temp3(1:5));
+                expo  = str2double(temp3(6:7));
+            elseif length(temp3) == 8
+                base  = str2double(temp3(2:6));
+                expo  = str2double(temp3(7:8));
+            else
+                fprintf('Error in ballistic coefficient calculation\n')
+                error('end program')
             end
 
-            % Six orbital elements 
-            OE = [a e inc RAAN w E];
-            fprintf('\n a [km]   e      inc [deg]  RAAN [deg]  w[deg]    E [deg] \n ')
-            fprintf('%4.2f  %4.4f   %4.4f       %4.4f     %4.4f    %4.4f', OE);
-        end
-    elseif indx == 2
-        [file,path] = uigetfile('*.csv');
-        if isequal(file,0)
-            disp('User selected Cancel');
-            return
-        else
-            disp(['User selected ', fullfile(path,file)]);
-            % TLE file name 
-            fid_input = fopen(fullfile(path,file));
-            L1c = fscanf(fid_input,'%24c%',1);
-            L2c = fscanf(fid_input,'%71c%',1);
-            L3c = fscanf(fid_input,'%71c%',1);
-            fprintf(L1c);
-            fprintf(L2c);
-            fprintf([L3c,'\n']);
-            fclose(fid_input);
-            % Open the TLE file and read TLE elements
-            fid_input = fopen(fullfile(path,file));
-            L1 = fscanf(fid_input,'%24c%*s',1);
-            L2 = fscanf(fid_input,'%d%6d%*c%5d%*3c%*2f%f%f%5d%*c%*d%5d%*c%*d%d%5d',[1,9]);
-            L3 = fscanf(fid_input,'%d%6d%f%f%f%f%f%f%f',[1,8]);
-            fclose(fid_input);
-
-            epoch = L2(1,4)*24*3600;        % Epoch Date and Julian Date Fraction
-            Db    = L2(1,5);                % Ballistic Coefficient
-            inc   = L3(1,3);                % Inclination [deg]
-            RAAN  = L3(1,4);                % Right Ascension of the Ascending Node [deg]
-            e     = L3(1,5)/1e7;            % Eccentricity 
-            w     = L3(1,6);                % Argument of periapsis [deg]
-            M     = L3(1,7);                % Mean anomaly [deg]
-            n     = L3(1,8);                % Mean motion [Revs per day]
-
-            % Orbital elements
-
-            a = (mu/(n*2*pi/(24*3600))^2)^(1/3);     % Semi-major axis [km]    
-
-            % Calculate the eccentric anomaly using Mean anomaly
-            err = 1e-10;            %Calculation Error
-            E0 = M; t =1;
-            itt = 0;
-            while(t) 
-                   E =  M + e*sind(E0);
-                  if ( abs(E - E0) < err)
-                      t = 0;
-                  end
-                  E0 = E;
-                  itt = itt+1;
-            end
-
-            % Six orbital elements 
-            OE = [a e inc RAAN w E];
-            fprintf('\n a [km]   e      inc [deg]  RAAN [deg]  w[deg]    E [deg] \n ')
-            fprintf('%4.2f  %4.4f   %4.4f       %4.4f     %4.4f    %4.4f', OE);
-        
+            Bstar = base*10^expo;
+            OrbitData.BC(j)    = 1/12.741621/Bstar; % [kg/m^2]
         end
     end
+
 elseif indx == 3
+    
     prompt = 'How many TLE do you want to analyse?';
     dlgtitle = 'Paste TLE';
     dims = [1 70];
     answer1 = inputdlg(prompt,dlgtitle,dims);
+    
     if isempty(answer1) 
         disp('User selected Cancel');
         return
     end
+    
     number_of_tle = str2double(answer1);
+    
     if number_of_tle < 2
         CreateStruct.Interpreter = 'tex';
         CreateStruct.WindowStyle = 'modal';
         h = msgbox('A minimum of two TLE set are needed to compute satellite to satellite visibility','Error',CreateStruct);
         return
     end
+    
     tle_list_dialog = cell(1,number_of_tle);
     dims_list = zeros(number_of_tle,2);
+    
     for i=1:number_of_tle
         tle_list_dialog{i} = sprintf('Enter TLE %d:', i);
         dims_list(i,1) = 3;
         dims_list(i,2) = 70;
     end
+    
     prompt = tle_list_dialog;
     dlgtitle = 'Paste TLE';
     dims = dims_list;
     answer2 = inputdlg(prompt,dlgtitle,dims);
+    
     if isempty(answer2) 
+        
         disp('User selected Cancel');
         return
     end
+    
 end
 
 %% Log file module
