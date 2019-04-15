@@ -97,6 +97,7 @@ Rsimple1 = 0; % Visibility parameter [m]
 Rsimple2 = 0; % Visibility parameter [m]
 Rcomplex = 0; % Visibility parameter [m]
 Rangle = 0; % Visibility parameter [m]
+Rv = 0; % Distance from earth to satellite-satellite line
 
 %% Algorithm
 
@@ -212,13 +213,18 @@ for t=t:increment:t_end % Simulation time and time discretization
     D1 = sqrt(A1^2+A2^2);
     D2 = sqrt(A3^2+A4^2);
     
+    % r1dotr2calc = r_vector(1,1)*r_vector(2,1) + r_vector(1,2)*r_vector(2,2) + r_vector(1,3)*r_vector(2,3) 
     % r1dotr2simple = (parameter(1)*parameter(2)/((1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)))))*(A1*cos(f(1))*cos(f(2))+A3*cos(f(1))*sin(f(2))+A2*sin(f(1))*cos(f(2))+A4*sin(f(1))*sin(f(2)));
-    % r1dotr2complex = (parameter(1)*parameter(2)/((1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)))))*(D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1)))+D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))));
+    r1dotr2complex = (parameter(1)*parameter(2)/((1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)))))*(D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1)))+D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))));
     % Rsimple1 = r1dotr2simple^2 - r(2)^2*r(1)^2 + (r(2)^2 + r(1)^2)*S^2 - 2*S^2*(r1dotr2simple);
     % Rsimple2 = r1dotr2complex^2 - r(2)^2*r(1)^2 + (r(2)^2 + r(1)^2)*S^2 - 2*S^2*(r1dotr2complex);
     Rcomplex = parameter(1)^2 * parameter(2)^2 * ( D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1))) + D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))) )^2 - parameter(1)^2*parameter(2)^2 + S^2*( parameter(1)^2*(1+eccentricity(2)*cos(f(2)))^2 + parameter(2)^2*(1+eccentricity(1)*cos(f(1)))^2 ) - 2*S^2*parameter(1)*parameter(2)* ( D1*cos(f(2))* ( cos_gamma*cos(f(1))+sin_gamma*sin(f(1)) ) + D2*sin(f(2))* ( cos_psi*cos(f(1))+sin_psi*sin(f(1)) ) ) * (1+eccentricity(1)*cos(f(1))) * (1+eccentricity(2)*cos(f(2)));
     % Rangle = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+eccentricity(2)*cos(f(2)))^2+parameter(2)^2*(1+eccentricity(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))*(1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)));
-    
+    Rv = sqrt((r(1)^2 * r(2)^2 - r1dotr2complex^2)/(r(1)^2 + r(2)^2 - 2*r1dotr2complex)) - body_radius;
+    % Rv_Tot = (r(1)^2*r(2)^2-r1dotr2complex^2)/(r(1)^2 + r(2)^2-2*r1dotr2complex)
+    % Rv_Numerador = r(1)^2 * r(2)^2 - r1dotr2complex^2
+    % Rv_Denominador = r(1)^2 + r(2)^2 - 2*r1dotr2complex
+
     % Step 9: Print Results for the given epoch time 
     pair_result = 'The result for the pair of satellites at %s is %d ';
     visibility = '--- Direct line of sight';
