@@ -7,7 +7,7 @@ clc
 
 % Visual contact for two satellites analysis
 
-% TLE of a pair of Satellites
+%% Hard-Coded TLE as input examples
 
 % EGYPTSAT 1
 % 1 31117U 07012A 08142.74302347 .00000033 00000-0 13654-4 0 2585
@@ -16,6 +16,8 @@ clc
 % TRMM
 % 1 25063U 97074A 08141.84184490 .00002948 00000-0 41919-4 0 7792
 % 2 25063 034.9668 053.5865 0001034 271.1427 088.9226 15.55875272598945
+
+%% Menu module
 
 % Input TLE choice module
 input_tle_list = {'Examples', 'From file', 'Paste'};
@@ -186,6 +188,8 @@ elseif indx == 3
     end
 end
 
+%% Log file module
+
 prompt = 'Name this analysis: Log file will be yyyymmddHHMMSS-Name.txt';
 dlgtitle = 'Log file name';
 dims = [1 70];
@@ -199,7 +203,7 @@ if fid_log == -1
   error('Cannot open log file.');
 end
 
-tic; % Runtime start
+% Log file is closed once the algorithm is ended with "fclose" function
 
 %% Input parameters
 
@@ -276,6 +280,8 @@ Rangle = 0; % Visibility parameter [m]
 Rv = 0; % Distance from earth to satellite-satellite line
 
 %% Algorithm
+
+tic; % Runtime start
 
 for t=t:increment:t_end % Simulation time and time discretization
 
@@ -419,6 +425,13 @@ for t=t:increment:t_end % Simulation time and time discretization
 
 end
 
+toc; % Runtime end
+
 fclose(fid_log); % Closing log file
 
-toc; % Runtime end
+%% CSV output file module
+
+fid_csv = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Output Files','InterlinkData.csv'), 'a');
+toadd = (1:4);
+dlmwrite(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Output Files','InterlinkData.csv'),toadd,'-append','delimiter',';');
+fclose(fid_csv);
