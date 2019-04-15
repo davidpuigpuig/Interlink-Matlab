@@ -25,6 +25,82 @@ end
 % 1 25063U 97074A 08141.84184490 .00002948 00000-0 41919-4 0 7792
 % 2 25063 034.9668 053.5865 0001034 271.1427 088.9226 15.55875272598945
 
+% Input TLE choice module
+input_tle_list = {'Hard-coded examples', 'File', 'Paste'};
+[indx,tf] = listdlg('ListString',input_tle_list,'Name','Two Line Element Input Choice','PromptString','Select a TLE input mode:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
+
+if tf == 0
+    disp('User selected Cancel');
+    return
+end
+
+if indx == 1
+    input_examples_list = {'1', '2', '3', '4', '5'};
+    [indx,tf] = listdlg('ListString',input_examples_list,'Name','Two Line Element Input Choice','PromptString','Select two or more TLE to analyse:','SelectionMode','multiple','ListSize',[500,300],'OKString','Run','CancelString','Quit');
+    if tf == 0
+        disp('User selected Quit');
+        return
+    end
+    if size(indx) == 1
+        return
+    end
+elseif indx == 2
+    input_file_list = {'.txt file', '.csv file'};
+    [indx,tf] = listdlg('ListString',input_file_list,'Name','Two Line Element Input Choice','PromptString','Select a TLE input file:','SelectionMode','single','ListSize',[500,300],'OKString','Select','CancelString','Quit');
+    if tf == 0
+        disp('User selected Quit');
+        return
+    end
+    if indx == 1
+        [file,path] = uigetfile('*.txt');
+        if isequal(file,0)
+            disp('User selected Cancel');
+            return
+        else
+            disp(['User selected ', fullfile(path,file)]);
+        end
+    elseif indx == 2
+        [file,path] = uigetfile('*.csv');
+        if isequal(file,0)
+            disp('User selected Cancel');
+            return
+        else
+            disp(['User selected ', fullfile(path,file)]);
+        end
+    end
+elseif indx == 3
+    prompt = 'How many TLE do you want to analyse?';
+    dlgtitle = 'Paste TLE';
+    dims = [1 70];
+    answer1 = inputdlg(prompt,dlgtitle,dims);
+    if isempty(answer1) 
+        disp('User selected Cancel');
+        return
+    end
+    number_of_tle = str2double(answer1);
+    if number_of_tle < 2
+        CreateStruct.Interpreter = 'tex';
+        CreateStruct.WindowStyle = 'modal';
+        h = msgbox('A minimum of two TLE set are needed to compute satellite to satellite visibility','Error',CreateStruct);
+        return
+    end
+    tle_list_dialog = cell(1,number_of_tle);
+    dims_list = zeros(number_of_tle,2);
+    for i=1:number_of_tle
+        tle_list_dialog{i} = sprintf('Enter TLE %d:', i);
+        dims_list(i,1) = 3;
+        dims_list(i,2) = 70;
+    end
+    prompt = tle_list_dialog;
+    dlgtitle = 'Paste TLE';
+    dims = dims_list;
+    answer2 = inputdlg(prompt,dlgtitle,dims);
+    if isempty(answer2) 
+        disp('User selected Cancel');
+        return
+    end
+end
+    
 %% Input parameters
 
 % Simulation Parameters
