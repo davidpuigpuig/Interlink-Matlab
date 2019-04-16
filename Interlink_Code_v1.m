@@ -1,3 +1,4 @@
+
 format long
 close all
 clc
@@ -7,20 +8,52 @@ clc
 
 % Visual contact for two satellites analysis
 
-%% Hard-Coded TLE as input examples
-
-% EGYPTSAT 1
-% 1 31117U 07012A 08142.74302347 .00000033 00000-0 13654-4 0 2585
-% 2 31117 098.0526 218.7638 0007144 061.2019 298.9894 14.69887657 58828
-
-% TRMM
-% 1 25063U 97074A 08141.84184490 .00002948 00000-0 41919-4 0 7792
-% 2 25063 034.9668 053.5865 0001034 271.1427 088.9226 15.55875272598945
-
 %% Menu module
 
+% Introduction and information
+
+input_tle_list = {'Author: David Puig', 'Tutor: Miquel Sureda', 'ESEIAAT', 'Universitat Politècncia de Catalunya (UPC)'};
+[indx,tf] = listdlg('ListString',input_tle_list,'Name','InterLink','PromptString','This tool is used to analyse winodws visibility in satellite constellations','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
+
+if tf == 0
+    disp('User selected Quit');
+    return
+end
+
+% Input Celestial Object System
+
+input_tle_list = {'Earth', 'Other'};
+[indx,tf] = listdlg('ListString',input_tle_list,'Name','Input Celestial Object System','PromptString','Select your analysis system:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
+
+if tf == 0
+    disp('User selected Quit');
+    return
+end
+
+% Common System Parameters
+
+k = 2*pi;      % Factor from [rev/s] to [rad/s]
+
+if indx == 1
+    % Earth System parameters
+    body_radius = 6.378e6;             % Radius of the primary body [m]
+    extra_radius = 10000;              % Extra radius for the primary body [m]
+    S = body_radius + extra_radius;    % Magnitude of the rise-set vector [m]
+    mu = 3.986004418e14;               % Standard gravitational parameter [m^3/s^2]
+else
+    % Other system parameters
+    prompt = {'Input the primary body radius [m]:', 'Input the extra radius [m]:', 'Input mu parameter [m^3/s^2]:'};
+    dlgtitle = 'Celestial Object System';
+    dims = [1 70; 1 70; 1 70];
+    system_answer = inputdlg(prompt,dlgtitle,dims);
+    body_radius = str2double(system_answer{1});    % Radius of the primary body [m]
+    extra_radius = str2double(system_answer{2});   % Extra radius for the primary body [m]
+    S = body_radius + extra_radius;                % Magnitude of the rise-set vector [m]
+    mu = str2double(system_answer{1});             % Standard gravitational parameter [m^3/s^2]
+end
+
 % Input TLE choice module
-input_tle_list = {'Examples', 'From .txt file', 'Paste'};
+input_tle_list = {'Examples', 'From .txt file (without blank lines between set)', 'Paste'};
 [indx,tf] = listdlg('ListString',input_tle_list,'Name','Two Line Element Input Choice','PromptString','Select a TLE input mode:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
@@ -31,12 +64,124 @@ end
 if indx == 1
     input_examples_list = {'EGYPTSAT 1', 'TRMM', 'GOES 3', 'NOAA 3', 'NAVSTAR 46'};
     [indx,tf] = listdlg('ListString',input_examples_list,'Name','Two Line Element Input Choice','PromptString','Select two or more TLE to analyse:','SelectionMode','multiple','ListSize',[500,300],'OKString','Run','CancelString','Quit');
+    
+    % Hard-Coded TLE as input examples
+    possible_example_answers = {{'EGYPTSAT 1                                                           ';
+                                '1 31117U 07012A 08142.74302347 .00000033 00000-0 13654-4 0 2585      ';
+                                '2 31117 098.0526 218.7638 0007144 061.2019 298.9894 14.69887657 58828'};
+                                {'TRMM                                                                 ';
+                                '1 25063U 97074A 08141.84184490 .00002948 00000-0 41919-4 0 7792      ';
+                                '2 25063 034.9668 053.5865 0001034 271.1427 088.9226 15.55875272598945'};
+                                {'GOES 3                                                               ';
+                                '1 10953U 78062A 08140.64132336 -.00000110 00000-0 10000-3 0 1137     ';
+                                '2 10953 014.2164 003.1968 0001795 336.4858 023.4617 01.00280027 62724'};
+                                {'NOAA 3                                                               ';
+                                '1 06920U 73086A 08141.92603915 -.00000030 00000-0 +10000-3 0 00067   ';
+                                '2 06920 101.7584 171.9430 0006223 187.3360 172.7614 12.40289355563642'};
+                                {'NAVSTAR 46                                                           ';
+                                '1 25933U 99055A 08142.14123352 .00000019 00000-0 10000-3 0 00126     ';
+                                '2 25933 051.0650 222.9439 0079044 032.8625 327.6958 02.00568102 63184'};
+                                {'EGYPTSAT 1                                                           ';
+                                '1 31117U 07012A 08142.74302347 .00000033 00000-0 13654-4 0 2585      ';
+                                '2 31117 098.0526 218.7638 0007144 061.2019 298.9894 14.69887657 58828'}};
+              
     if tf == 0
         disp('User selected Quit');
         return
     end
+    
     if size(indx) == 1
+        CreateStruct.Interpreter = 'tex';
+        CreateStruct.WindowStyle = 'modal';
+        msgbox('A minimum of two TLE set are needed to compute satellite to satellite visibility','Error',CreateStruct);
         return
+    else
+        % TLE variables extraction
+        selected_example_answers = cell(1,1);
+        count=1;
+        for i=1:size(indx,2)  
+            for j=1:3
+            selected_example_answers{1}{count,1} = possible_example_answers{indx(i),1}{j};
+            count=count+1;
+            end
+        end
+        
+        % Find the total number of satellites in the file
+        num_satellites = size(indx,2);
+
+        % Initialize array
+        sat_id_line = zeros(1,num_satellites);
+        line_count = 1;
+        for i=1:num_satellites
+            % Take every 3rd line
+            sat_id_line(i) = line_count;
+            txt_data = textscan(selected_example_answers{1}{line_count,1},'%s %s %s %s %s %s %s %s %s');
+
+            OrbitData.ID(i) = txt_data{1};
+            if isempty(txt_data{2})
+                OrbitData.designation(i) = {''};
+            else
+                OrbitData.designation(i) = txt_data{2};
+            end
+            
+            if isempty(txt_data{3})
+                OrbitData.PRN(i) = {''};
+            else
+                OrbitData.PRN(i) = txt_data{3};
+            end
+
+            % Jump to the next Satellite Name line
+            line_count  = line_count + 3;
+        end
+
+        % Find the two lines corresponding to the spacecraft in question
+        for j=1:length(sat_id_line)
+
+            % Find the first line of the first satellite
+            index = sat_id_line(j);
+            txt_data_second = textscan(selected_example_answers{1}{index+2,1},'%s %s %s %s %s %s %s %s %s');
+
+            % Translate two line element data into obital elements
+            OrbitData.i(j)     = str2double(txt_data_second{1,3});      % [deg]
+            OrbitData.RAAN(j)  = str2double(txt_data_second{1,4});      % [deg]
+            OrbitData.omega(j) = str2double(txt_data_second{1,6});      % [deg]
+            OrbitData.M(j)     = str2double(txt_data_second{1,7});      % [deg]
+            n                  = str2double(txt_data_second{1,8});      % [rev/day]
+            n                  = n*2*pi/24/60/60;                       % [rad/s]
+            OrbitData.a(j)     = ( mu / n^2 )^(1/3);                    % [m]
+            OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7; % [unitless]
+
+            % Compute the UTC date / time
+            txt_data_first = textscan(selected_example_answers{1}{index+1,1},'%s %s %s %s %s %s %s %s %s');
+            temp2             = txt_data_first{1,4};
+            yy                = str2double(temp2{1}(1:2));
+            yyyy              = 2000 + yy;
+            start             = datenum([yyyy 0 0 0 0 0]);
+            secs              = str2double(temp2{1}(3:length(temp2{1})))*24*3600-2*24*3600;
+            date1             = datevec(addtodate(start,floor(secs),'second'));
+            remainder         = [0 0 0 0 0 mod(secs,1)];
+            OrbitData.date{j} = datestr(date1+remainder,'dd-mmm-yyyy HH:MM:SS.FFF');
+
+            % Compute ballistic coefficient in SI units
+            temp3 = txt_data_first{1,7};
+            if length(temp3{1}) == 7
+                base  = str2double(temp3{1}(1:5));
+                expo  = str2double(temp3{1}(6:7));
+            elseif length(temp3{1}) == 8
+                base  = str2double(temp3{1}(2:6));
+                expo  = str2double(temp3{1}(7:8));
+            else
+                fprintf('Error in ballistic coefficient calculation\n')
+                CreateStruct.Interpreter = 'tex';
+                CreateStruct.WindowStyle = 'modal';
+                msgbox('Error in ballistic coefficient calculation\n','Error',CreateStruct);            
+                error('End program')
+            end
+
+            Bstar = base*10^expo;
+            OrbitData.BC(j) = 1/12.741621/Bstar; % [kg/m^2]
+
+        end
     end
     
 elseif indx == 2
@@ -52,7 +197,6 @@ elseif indx == 2
         % TLE file name and variables extraction
         fid_input = fopen(fullfile(path,file));
         txt_data = textscan(fid_input,'%s %s %s %s %s %s %s %s %s');
-        mu = 3.986004418e14; % Standard gravitational parameter [m^3/s^2]
 
         % Find the total number of satellites in the file
         num_satellites = length(txt_data{1})/3;
@@ -65,10 +209,20 @@ elseif indx == 2
             sat_id_line(i) = line_count;
 
             OrbitData.ID(i) = txt_data{1}(line_count);
-            OrbitData.designation(i) = txt_data{2}(line_count);
-            OrbitData.PRN(i) = txt_data{3}(line_count);
-
-            line_count  = line_count + 3; % Jump to the next Satellite Name line
+            if isempty(txt_data{2}(line_count))
+                OrbitData.designation(i) = {''};
+            else
+                OrbitData.designation(i) = txt_data{2}(line_count);
+            end
+            
+            if isempty(txt_data{3}(line_count))
+                OrbitData.PRN(i) = {''};
+            else
+                OrbitData.PRN(i) = txt_data{3}(line_count);
+            end
+            
+            % Jump to the next Satellite Name line
+            line_count  = line_count + 3;
         end
 
         % Find the two lines corresponding to the spacecraft in question
@@ -107,11 +261,16 @@ elseif indx == 2
                 expo  = str2double(temp3(7:8));
             else
                 fprintf('Error in ballistic coefficient calculation\n')
+                CreateStruct.Interpreter = 'tex';
+                CreateStruct.WindowStyle = 'modal';
+                msgbox('Error in ballistic coefficient calculation\n','Error',CreateStruct);
                 error('end program')
+                return
             end
 
             Bstar = base*10^expo;
             OrbitData.BC(j) = 1/12.741621/Bstar; % [kg/m^2]
+            
         end
     end
 
@@ -119,7 +278,7 @@ elseif indx == 3
     
     prompt = 'How many TLE do you want to analyse?';
     dlgtitle = 'Paste TLE';
-    dims = [1 70];
+    dims = [1 69];
     tle_num_answer = inputdlg(prompt,dlgtitle,dims);
     
     if isempty(tle_num_answer) 
@@ -136,7 +295,7 @@ elseif indx == 3
         return
     end
     
-    prompt = sprintf('Enter %d sets of TLE without line break between set:', number_of_tle);
+    prompt = sprintf('Enter %d sets of TLE without blank lines between set:', number_of_tle);
     dlgtitle = 'Paste TLE';
     dims = [3*number_of_tle 69];
     tle_pasted_answer = inputdlg(prompt,dlgtitle,dims);
@@ -147,10 +306,6 @@ elseif indx == 3
     end
     
     % TLE variables extraction
-    
-    % Correct format: tle_pasted_answer{1}(2,1:69)
-
-    mu = 3.986004418e14; % Standard gravitational parameter [m^3/s^2]
 
     % Find the total number of satellites in the file
     num_satellites = str2double(tle_num_answer);
@@ -161,14 +316,23 @@ elseif indx == 3
     for i=1:num_satellites
         % Take every 3rd line
         sat_id_line(i) = line_count;
-        
         txt_data = textscan(tle_pasted_answer{1}(line_count,1:69),'%s %s %s %s %s %s %s %s %s');
-        
+         
         OrbitData.ID(i) = txt_data{1};
-        OrbitData.designation(i) = txt_data{2};
-        OrbitData.PRN(i) = txt_data{3};
-
-        line_count  = line_count + 3; % Jump to the next Satellite Name line
+            if isempty(txt_data{2})
+                OrbitData.designation(i) = {''};
+            else
+                OrbitData.designation(i) = txt_data{2};
+            end
+            
+            if isempty(txt_data{3})
+                OrbitData.PRN(i) = {''};
+            else
+                OrbitData.PRN(i) = txt_data{3};
+            end
+        
+        % Jump to the next Satellite Name line
+        line_count  = line_count + 3; 
     end
 
     % Find the two lines corresponding to the spacecraft in question
@@ -184,8 +348,8 @@ elseif indx == 3
         OrbitData.omega(j) = str2double(txt_data_second{1,6});      % [deg]
         OrbitData.M(j)     = str2double(txt_data_second{1,7});      % [deg]
         n                  = str2double(txt_data_second{1,8});      % [rev/day]
-        n                  = n*2*pi/24/60/60;                         % [rad/s]
-        OrbitData.a(j)     = ( mu / n^2 )^(1/3);                      % [m]
+        n                  = n*2*pi/24/60/60;                       % [rad/s]
+        OrbitData.a(j)     = ( mu / n^2 )^(1/3);                    % [m]
         OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7; % [unitless]
 
         % Compute the UTC date / time
@@ -209,6 +373,9 @@ elseif indx == 3
             expo  = str2double(temp3{1}(7:8));
         else
             fprintf('Error in ballistic coefficient calculation\n')
+            CreateStruct.Interpreter = 'tex';
+            CreateStruct.WindowStyle = 'modal';
+            msgbox('Error in ballistic coefficient calculation\n','Error',CreateStruct);            
             error('End program')
         end
         
@@ -225,6 +392,12 @@ prompt = 'Name this analysis: Log file will be yyyymmddHHMMSS-Name.txt';
 dlgtitle = 'Log file name';
 dims = [1 70];
 name_log = inputdlg(prompt,dlgtitle,dims);
+
+if isempty(name_log)
+    disp('User selected Cancel');
+    return
+end
+
 date_log = datestr(now,'yyyymmddHHMMSS');
 full_name_log = sprintf('%s-%s.txt',date_log,name_log{1});
 
@@ -252,13 +425,6 @@ end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Un
 fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), end_time_to_log); % Appending simulation end time to log file
 t_end = end_time_unix; % End of simulation time in Unix time [s]
 increment = 10; % Time increment [s]
-
-% System parameters (Earth)
-body_radius = 6.378e6; % Radius of the primary body [m]
-extra_radius = 10000; % Extra radius for the primary body [m]
-S = body_radius + extra_radius; % Magnitude of the rise-set vector [m]
-k = 2*pi; % Factor from [rev/s] to [rad/s]
-mu = 3.986004418e14; % Standard gravitational parameter [m^3/s^2]
 
 % Satellite orbit parameters
 inclination = [98.0526*pi/180 34.9668*pi/180]; % Inclination [degrees] converted to [rad]
