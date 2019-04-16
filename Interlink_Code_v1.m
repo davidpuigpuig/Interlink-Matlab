@@ -20,6 +20,8 @@ if tf == 0
     return
 end
 
+%% Input Parameters
+
 % Input Celestial Object System
 
 input_tle_list = {'Earth', 'Other'};
@@ -36,20 +38,20 @@ k = 2*pi;      % Factor from [rev/s] to [rad/s]
 
 if indx == 1
     % Earth System parameters
-    body_radius = 6.378e6;             % Radius of the primary body [m]
-    extra_radius = 10000;              % Extra radius for the primary body [m]
-    S = body_radius + extra_radius;    % Magnitude of the rise-set vector [m]
-    mu = 3.986004418e14;               % Standard gravitational parameter [m^3/s^2]
+    body_radius = 6.378e6;                          % Radius of the primary body [m]
+    extra_radius = 10000;                           % Extra radius for the primary body [m]
+    S = body_radius + extra_radius;                 % Magnitude of the rise-set vector [m]
+    mu = 3.986004418e14;                            % Standard gravitational parameter [m^3/s^2]
 else
     % Other system parameters
     prompt = {'Input the primary body radius [m]:', 'Input the extra radius [m]:', 'Input mu parameter [m^3/s^2]:'};
     dlgtitle = 'Celestial Object System';
     dims = [1 70; 1 70; 1 70];
     system_answer = inputdlg(prompt,dlgtitle,dims);
-    body_radius = str2double(system_answer{1});    % Radius of the primary body [m]
-    extra_radius = str2double(system_answer{2});   % Extra radius for the primary body [m]
-    S = body_radius + extra_radius;                % Magnitude of the rise-set vector [m]
-    mu = str2double(system_answer{1});             % Standard gravitational parameter [m^3/s^2]
+    body_radius = str2double(system_answer{1});     % Radius of the primary body [m]
+    extra_radius = str2double(system_answer{2});    % Extra radius for the primary body [m]
+    S = body_radius + extra_radius;                 % Magnitude of the rise-set vector [m]
+    mu = str2double(system_answer{1});              % Standard gravitational parameter [m^3/s^2]
 end
 
 % Input TLE choice module
@@ -142,14 +144,14 @@ if indx == 1
             txt_data_second = textscan(selected_example_answers{1}{index+2,1},'%s %s %s %s %s %s %s %s %s');
 
             % Translate two line element data into obital elements
-            OrbitData.i(j)     = str2double(txt_data_second{1,3});      % [deg]
-            OrbitData.RAAN(j)  = str2double(txt_data_second{1,4});      % [deg]
-            OrbitData.omega(j) = str2double(txt_data_second{1,6});      % [deg]
-            OrbitData.M(j)     = str2double(txt_data_second{1,7});      % [deg]
-            n                  = str2double(txt_data_second{1,8});      % [rev/day]
-            n                  = n*2*pi/24/60/60;                       % [rad/s]
-            OrbitData.a(j)     = ( mu / n^2 )^(1/3);                    % [m]
-            OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7; % [unitless]
+            OrbitData.i(j)     = str2double(txt_data_second{1,3});          % [deg]
+            OrbitData.RAAN(j)  = str2double(txt_data_second{1,4});          % [deg]
+            OrbitData.omega(j) = str2double(txt_data_second{1,6});          % [deg]
+            OrbitData.M(j)     = str2double(txt_data_second{1,7});          % [deg]
+            n                  = str2double(txt_data_second{1,8});          % [rev/day]
+            n                  = n*2*pi/24/60/60;                           % [rad/s]
+            OrbitData.a(j)     = ( mu / n^2 )^(1/3);                        % [m]
+            OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7;     % [unitless]
 
             % Compute the UTC date / time
             txt_data_first = textscan(selected_example_answers{1}{index+1,1},'%s %s %s %s %s %s %s %s %s');
@@ -232,14 +234,14 @@ elseif indx == 2
             index = sat_id_line(j);
 
             % Translate two line element data into obital elements
-            OrbitData.i(j)     = str2double(txt_data{1,3}{index+2});      % [deg]
-            OrbitData.RAAN(j)  = str2double(txt_data{1,4}{index+2});      % [deg]
-            OrbitData.omega(j) = str2double(txt_data{1,6}{index+2});      % [deg]
-            OrbitData.M(j)     = str2double(txt_data{1,7}{index+2});      % [deg]
-            n                  = str2double(txt_data{1,8}{index+2});      % [rev/day]
-            n                  = n*2*pi/24/60/60;                         % [rad/s]
-            OrbitData.a(j)     = ( mu / n^2 )^(1/3);                      % [m]
-            OrbitData.e(j)     = str2double(txt_data{1,5}{index+2})*1e-7; % [unitless]
+            OrbitData.i(j)     = str2double(txt_data{1,3}{index+2});        % [deg]
+            OrbitData.RAAN(j)  = str2double(txt_data{1,4}{index+2});        % [deg]
+            OrbitData.omega(j) = str2double(txt_data{1,6}{index+2});        % [deg]
+            OrbitData.M(j)     = str2double(txt_data{1,7}{index+2});        % [deg]
+            n                  = str2double(txt_data{1,8}{index+2});        % [rev/day]
+            n                  = n*2*pi/24/60/60;                           % [rad/s]
+            OrbitData.a(j)     = ( mu / n^2 )^(1/3);                        % [m]
+            OrbitData.e(j)     = str2double(txt_data{1,5}{index+2})*1e-7;   % [unitless]
 
             % Compute the UTC date / time
             temp2             = txt_data{1,4}{index+1};
@@ -343,14 +345,14 @@ elseif indx == 3
         txt_data_second = textscan(tle_pasted_answer{1}(index+2,1:69),'%s %s %s %s %s %s %s %s %s');
         
         % Translate two line element data into obital elements
-        OrbitData.i(j)     = str2double(txt_data_second{1,3});      % [deg]
-        OrbitData.RAAN(j)  = str2double(txt_data_second{1,4});      % [deg]
-        OrbitData.omega(j) = str2double(txt_data_second{1,6});      % [deg]
-        OrbitData.M(j)     = str2double(txt_data_second{1,7});      % [deg]
-        n                  = str2double(txt_data_second{1,8});      % [rev/day]
-        n                  = n*2*pi/24/60/60;                       % [rad/s]
-        OrbitData.a(j)     = ( mu / n^2 )^(1/3);                    % [m]
-        OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7; % [unitless]
+        OrbitData.i(j)     = str2double(txt_data_second{1,3});              % [deg]
+        OrbitData.RAAN(j)  = str2double(txt_data_second{1,4});              % [deg]
+        OrbitData.omega(j) = str2double(txt_data_second{1,6});              % [deg]
+        OrbitData.M(j)     = str2double(txt_data_second{1,7});              % [deg]
+        n                  = str2double(txt_data_second{1,8});              % [rev/day]
+        n                  = n*2*pi/24/60/60;                               % [rad/s]
+        OrbitData.a(j)     = ( mu / n^2 )^(1/3);                            % [m]
+        OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7;         % [unitless]
 
         % Compute the UTC date / time
         txt_data_first = textscan(tle_pasted_answer{1}(index+1,1:69),'%s %s %s %s %s %s %s %s %s');
@@ -409,72 +411,76 @@ end
 
 % Log file is closed with "fclose" function once the algorithm is ended
 
-%% Input parameters
+%% Simulation Parameters Preparation
 
 % Simulation Parameters
 start_time = '22-May-2008 12:00:00';
 start_time_unix = posixtime(datetime(start_time));
 fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix); % Command window print
 start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
-fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), start_time_to_log); % Appending simulation end time to log file
-t = start_time_unix; % Start simulation time in Unix time [s]
+fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), start_time_to_log);         % Appending simulation end time to log file
+t = start_time_unix;                                                        % Start simulation time in Unix time [s]
 end_time = '23-May-2008 00:00:00';
 end_time_unix = posixtime(datetime(end_time));
 fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix); % Command window print
 end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
-fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), end_time_to_log); % Appending simulation end time to log file
-t_end = end_time_unix; % End of simulation time in Unix time [s]
-increment = 10; % Time increment [s]
+fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), end_time_to_log);           % Appending simulation end time to log file
+t_end = end_time_unix;                                                      % End of simulation time in Unix time [s]
+increment = 10;                                                             % Time increment [s]
 
 % Satellite orbit parameters
-inclination = [98.0526*pi/180 34.9668*pi/180]; % Inclination [degrees] converted to [rad]
-argument_periapsis = [61.2019*pi/180 271.1427*pi/180]; % Argument of the periapsis [degrees] converted to [rad]
-longitude_ascending_node = [218.7638*pi/180 53.5865*pi/180]; % Longitude of the ascending node [degrees] converted to [rad]
-mean_anomaly_tle = [298.9894*pi/180 88.9226*pi/180]; % Mean anomaly extracted from TLE [degrees] converted to [rad]
-mean_motion_tle = [14.69887657*2*pi/86400 15.558752725*2*pi/86400]; % Unperturbed mean motion extracted from TLE [rev/day] converted to [rad/s]
-epoch_year_tle = [2008 2008]; % Epoch year extracted from TLE [s]
-epoch_day_tle = [142.74302347 141.84184490]; % Epoch day extracted from TLE [s] 
+inclination = [98.0526*pi/180 34.9668*pi/180];                              % Inclination [degrees] converted to [rad]
+argument_periapsis = [61.2019*pi/180 271.1427*pi/180];                      % Argument of the periapsis [degrees] converted to [rad]
+longitude_ascending_node = [218.7638*pi/180 53.5865*pi/180];                % Longitude of the ascending node [degrees] converted to [rad]
+mean_anomaly_tle = [298.9894*pi/180 88.9226*pi/180];                        % Mean anomaly extracted from TLE [degrees] converted to [rad]
+mean_motion_tle = [14.69887657*2*pi/86400 15.558752725*2*pi/86400];         % Unperturbed mean motion extracted from TLE [rev/day] converted to [rad/s]
+epoch_year_tle = [2008 2008];                                               % Epoch year extracted from TLE [s]
+epoch_day_tle = [142.74302347 141.84184490];                                % Epoch day extracted from TLE [s] 
 hours1 = 0.74302347*24;
 minutes1 = abs(hours1-fix(hours1))*60;
 seconds1 = abs(minutes1-fix(minutes1))*60;
 hours2 = 0.84184490*24;
 minutes2 = abs(hours2-fix(hours2))*60;
 seconds2 = abs(minutes2-fix(minutes2))*60;
-epoch = [posixtime(datetime('22-May-2008 17:49:57.2278')) posixtime(datetime('21-May-2008 20:12:15.3994'))]; % Epoch from Unix time [s] 
-T = [epoch(1)-mean_anomaly_tle(1)/mean_motion_tle(1) epoch(2)-mean_anomaly_tle(2)/mean_motion_tle(2)]; % Time of perifocal passage [s]
-semimajor_axis = [mu^(1/3)/(mean_motion_tle(1))^(2/3) mu^(1/3)/(mean_motion_tle(2))^(2/3)]; % Semi-major axis [m]
-eccentricity = [0.0007144 0.0001034]; % Eccentricity [dimensionless]
-periapsis_distance = [semimajor_axis(1)*(1-eccentricity(1)) semimajor_axis(2)*(1-eccentricity(2))]; % Periapsis Distance [m]
+epoch = [posixtime(datetime('22-May-2008 17:49:57.2278')); 
+         posixtime(datetime('21-May-2008 20:12:15.3994'))];                 % Epoch from Unix time [s] 
+T = [epoch(1)-mean_anomaly_tle(1)/mean_motion_tle(1) 
+     epoch(2)-mean_anomaly_tle(2)/mean_motion_tle(2)];                      % Time of perifocal passage [s]
+semimajor_axis = [mu^(1/3)/(mean_motion_tle(1))^(2/3); 
+                  mu^(1/3)/(mean_motion_tle(2))^(2/3)];                     % Semi-major axis [m]
+eccentricity = [0.0007144 0.0001034];                                       % Eccentricity [dimensionless]
+periapsis_distance = [semimajor_axis(1)*(1-eccentricity(1));
+                      semimajor_axis(2)*(1-eccentricity(2))];               % Periapsis Distance [m]
 
 % Preallocated variables
 
-n = [0 0]; % Unperturbed mean motion [rev/day]
-M = [0 0]; % Mean anomaly [degrees]
-Fn = [0 0]; % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n) [degrees or rad]
-Fn1 = [0 0]; % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n+1) [degrees or rad] 
-f = [0 0]; % True Anomaly [degrees]
-A = [0 0]; % Barker's Equation parameter [degrees]
-B = [0 0]; % Barker's Equation parameter
-C = [0 0]; % Barker's Equation parameter
-En = [0 0]; % Eccentric anomaly from Kepler's Equation (n) [degrees or rad]
-En1 = [0 0]; % Eccentric anomaly from Kepler's Equation (n+1) [degrees or rad]
-Px = [0 0]; % First component of the unit orientation vector (dynamical center-periapsis) [m] 
-Py = [0 0]; % Second component of the unit orientation vector (dynamical center-periapsis) [m] 
-Pz = [0 0]; % Third component of the unit orientation vector (dynamical center-periapsis) [m] 
-Qx = [0 0]; % First component of the unit orientation vector (advanced to P by a right angle in the motion direction) [m] 
-Qy = [0 0]; % Second component of the unit orientation vector (advanced to P by a right angle in the motion direction) [m] 
-Qz = [0 0]; % Third component of the unit orientation vector (advanced to P by a right angle in the motion direction) [m] 
-r = [0 0]; % Magnitude of the vector from the center of the primary body to the satellite [m]
-xi = [0 0]; % Component of r_vector in the periapsis line [m]
-eta = [0 0]; % Component of r_vector in the descending node line [m]
-r_fullvector = [0 0 0]; % Intermediate vector to store the pair of r_vectors [m]
-r_vector = [0 0 0; 0 0 0]; % Vector from the center of the primary body to the satellite [m]
-parameter = [0 0]; % Semi-parameter of the orbit [m]
-Rsimple1 = 0; % Visibility parameter [m]
-Rsimple2 = 0; % Visibility parameter [m]
-Rcomplex = 0; % Visibility parameter [m]
-Rangle = 0; % Visibility parameter [m]
-Rv = 0; % Distance from earth to satellite-satellite line
+n = [0 0];                      % Unperturbed mean motion [rev/day]
+M = [0 0];                      % Mean anomaly [degrees]
+Fn = [0 0];                     % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n) [degrees or rad]
+Fn1 = [0 0];                    % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n+1) [degrees or rad] 
+f = [0 0];                      % True Anomaly [degrees]
+A = [0 0];                      % Barker's Equation parameter [degrees]
+B = [0 0];                      % Barker's Equation parameter
+C = [0 0];                      % Barker's Equation parameter
+En = [0 0];                     % Eccentric anomaly from Kepler's Equation (n) [degrees or rad]
+En1 = [0 0];                    % Eccentric anomaly from Kepler's Equation (n+1) [degrees or rad]
+Px = [0 0];                     % First component of the unit orientation vector (dynamical center-periapsis) [m] 
+Py = [0 0];                     % Second component of the unit orientation vector (dynamical center-periapsis) [m] 
+Pz = [0 0];                     % Third component of the unit orientation vector (dynamical center-periapsis) [m] 
+Qx = [0 0];                     % First component of the unit orientation vector (advanced to P by a right angle in the motion direction) [m] 
+Qy = [0 0];                     % Second component of the unit orientation vector (advanced to P by a right angle in the motion direction) [m] 
+Qz = [0 0];                     % Third component of the unit orientation vector (advanced to P by a right angle in the motion direction) [m] 
+r = [0 0];                      % Magnitude of the vector from the center of the primary body to the satellite [m]
+xi = [0 0];                     % Component of r_vector in the periapsis line [m]
+eta = [0 0];                    % Component of r_vector in the descending node line [m]
+r_fullvector = [0 0 0];         % Intermediate vector to store the pair of r_vectors [m]
+r_vector = [0 0 0; 0 0 0];      % Vector from the center of the primary body to the satellite [m]
+parameter = [0 0];              % Semi-parameter of the orbit [m]
+Rsimple1 = 0;                   % Visibility parameter [m]
+Rsimple2 = 0;                   % Visibility parameter [m]
+Rcomplex = 0;                   % Visibility parameter [m]
+Rangle = 0;                     % Visibility parameter [m]
+Rv = 0;                         % Distance from earth to satellite-satellite line
 
 %% Algorithm
 
