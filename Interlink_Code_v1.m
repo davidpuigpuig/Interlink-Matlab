@@ -49,9 +49,8 @@ elseif indx == 2
     
     else
         disp(['User selected ', fullfile(path,file)]);
-        % TLE file name 
-        %fid_input = fopen(fullfile(path,file));
-        fid_input = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Input Files','iridium.txt'));
+        % TLE file name and variables extraction
+        fid_input = fopen(fullfile(path,file));
         txt_data = textscan(fid_input,'%s %s %s %s %s %s %s %s %s');
         mu = 3.986004418e14; % Standard gravitational parameter [m^3/s^2]
 
@@ -74,6 +73,7 @@ elseif indx == 2
 
         % Find the two lines corresponding to the spacecraft in question
         for j=1:length(sat_id_line)
+            
             % Find the first line of the first satellite
             index = sat_id_line(j);
 
@@ -111,7 +111,7 @@ elseif indx == 2
             end
 
             Bstar = base*10^expo;
-            OrbitData.BC(j)    = 1/12.741621/Bstar; % [kg/m^2]
+            OrbitData.BC(j) = 1/12.741621/Bstar; % [kg/m^2]
         end
     end
 
@@ -120,40 +120,101 @@ elseif indx == 3
     prompt = 'How many TLE do you want to analyse?';
     dlgtitle = 'Paste TLE';
     dims = [1 70];
-    answer1 = inputdlg(prompt,dlgtitle,dims);
+    tle_num_answer = inputdlg(prompt,dlgtitle,dims);
     
-    if isempty(answer1) 
+    if isempty(tle_num_answer) 
         disp('User selected Cancel');
         return
     end
     
-    number_of_tle = str2double(answer1);
+    number_of_tle = str2double(tle_num_answer);
     
     if number_of_tle < 2
         CreateStruct.Interpreter = 'tex';
         CreateStruct.WindowStyle = 'modal';
-        h = msgbox('A minimum of two TLE set are needed to compute satellite to satellite visibility','Error',CreateStruct);
+        msgbox('A minimum of two TLE set are needed to compute satellite to satellite visibility','Error',CreateStruct);
         return
     end
     
-    tle_list_dialog = cell(1,number_of_tle);
-    dims_list = zeros(number_of_tle,2);
-    
-    for i=1:number_of_tle
-        tle_list_dialog{i} = sprintf('Enter TLE %d:', i);
-        dims_list(i,1) = 3;
-        dims_list(i,2) = 70;
-    end
-    
-    prompt = tle_list_dialog;
+    prompt = sprintf('Enter %d sets of TLE without line break between set:', number_of_tle);
     dlgtitle = 'Paste TLE';
-    dims = dims_list;
-    answer2 = inputdlg(prompt,dlgtitle,dims);
+    dims = [3*number_of_tle 69];
+    tle_pasted_answer = inputdlg(prompt,dlgtitle,dims);
     
-    if isempty(answer2) 
-        
+    if isempty(tle_pasted_answer)
         disp('User selected Cancel');
         return
+    end
+    
+    % TLE variables extraction
+    
+    % Correct format: tle_pasted_answer{1}(2,1:69)
+
+    mu = 3.986004418e14; % Standard gravitational parameter [m^3/s^2]
+
+    % Find the total number of satellites in the file
+    num_satellites = str2double(tle_num_answer);
+
+    % Initialize array
+    sat_id_line = zeros(1,num_satellites);
+    line_count = 1;
+    for i=1:num_satellites
+        % Take every 3rd line
+        sat_id_line(i) = line_count;
+        
+        txt_data = textscan(tle_pasted_answer{1}(line_count,1:69),'%s %s %s %s %s %s %s %s %s');
+        
+        OrbitData.ID(i) = txt_data{1};
+        OrbitData.designation(i) = txt_data{2};
+        OrbitData.PRN(i) = txt_data{3};
+
+        line_count  = line_count + 3; % Jump to the next Satellite Name line
+    end
+
+    % Find the two lines corresponding to the spacecraft in question
+    for j=1:length(sat_id_line)
+        
+        % Find the first line of the first satellite
+        index = sat_id_line(j);
+        txt_data_second = textscan(tle_pasted_answer{1}(index+2,1:69),'%s %s %s %s %s %s %s %s %s');
+        
+        % Translate two line element data into obital elements
+        OrbitData.i(j)     = str2double(txt_data_second{1,3});      % [deg]
+        OrbitData.RAAN(j)  = str2double(txt_data_second{1,4});      % [deg]
+        OrbitData.omega(j) = str2double(txt_data_second{1,6});      % [deg]
+        OrbitData.M(j)     = str2double(txt_data_second{1,7});      % [deg]
+        n                  = str2double(txt_data_second{1,8});      % [rev/day]
+        n                  = n*2*pi/24/60/60;                         % [rad/s]
+        OrbitData.a(j)     = ( mu / n^2 )^(1/3);                      % [m]
+        OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7; % [unitless]
+
+        % Compute the UTC date / time
+        txt_data_first = textscan(tle_pasted_answer{1}(index+1,1:69),'%s %s %s %s %s %s %s %s %s');
+        temp2             = txt_data_first{1,4};
+        yy                = str2double(temp2{1}(1:2));
+        yyyy              = 2000 + yy;
+        start             = datenum([yyyy 0 0 0 0 0]);
+        secs              = str2double(temp2{1}(3:length(temp2{1})))*24*3600-2*24*3600;
+        date1             = datevec(addtodate(start,floor(secs),'second'));
+        remainder         = [0 0 0 0 0 mod(secs,1)];
+        OrbitData.date{j} = datestr(date1+remainder,'dd-mmm-yyyy HH:MM:SS.FFF');
+
+        % Compute ballistic coefficient in SI units
+        temp3 = txt_data_first{1,7};
+        if length(temp3{1}) == 7
+            base  = str2double(temp3{1}(1:5));
+            expo  = str2double(temp3{1}(6:7));
+        elseif length(temp3{1}) == 8
+            base  = str2double(temp3{1}(2:6));
+            expo  = str2double(temp3{1}(7:8));
+        else
+            fprintf('Error in ballistic coefficient calculation\n')
+            error('End program')
+        end
+        
+        Bstar = base*10^expo;
+        OrbitData.BC(j) = 1/12.741621/Bstar; % [kg/m^2]
+        
     end
     
 end
@@ -173,7 +234,7 @@ if fid_log == -1
   error('Cannot open log file.');
 end
 
-% Log file is closed once the algorithm is ended with "fclose" function
+% Log file is closed with "fclose" function once the algorithm is ended
 
 %% Input parameters
 
