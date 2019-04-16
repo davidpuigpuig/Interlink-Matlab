@@ -181,7 +181,7 @@ if indx == 1
             end
 
             Bstar = base*10^expo;
-            OrbitData.BC(j) = 1/12.741621/Bstar; % [kg/m^2]
+            OrbitData.BC(j) = 1/12.741621/Bstar;                            % Ballistic coefficient [kg/m^2]
 
         end
     end
