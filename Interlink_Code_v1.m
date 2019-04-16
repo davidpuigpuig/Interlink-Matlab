@@ -144,17 +144,17 @@ if indx == 1
             txt_data_second = textscan(selected_example_answers{1}{index+2,1},'%s %s %s %s %s %s %s %s %s');
 
             % Translate two line element data into obital elements
-            OrbitData.i(j)     = str2double(txt_data_second{1,3});          % [deg]
-            OrbitData.RAAN(j)  = str2double(txt_data_second{1,4});          % [deg]
-            OrbitData.omega(j) = str2double(txt_data_second{1,6});          % [deg]
-            OrbitData.M(j)     = str2double(txt_data_second{1,7});          % [deg]
+            OrbitData.i(j)     = str2double(txt_data_second{1,3})*(pi/180); % [deg] to [rad/s]
+            OrbitData.RAAN(j)  = str2double(txt_data_second{1,4})*(pi/180); % [deg] to [rad/s]
+            OrbitData.omega(j) = str2double(txt_data_second{1,6})*(pi/180); % [deg] to [rad/s]
+            OrbitData.M(j)     = str2double(txt_data_second{1,7})*(pi/180); % [deg] to [rad/s]
             n                  = str2double(txt_data_second{1,8});          % [rev/day]
-            n                  = n*2*pi/24/60/60;                           % [rad/s]
+            OrbitData.n(j)     = n*2*pi/24/60/60;                           % [rad/s]
             OrbitData.a(j)     = ( mu / n^2 )^(1/3);                        % [m]
             OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7;     % [unitless]
 
             % Compute the UTC date / time
-            txt_data_first = textscan(selected_example_answers{1}{index+1,1},'%s %s %s %s %s %s %s %s %s');
+            txt_data_first    = textscan(selected_example_answers{1}{index+1,1},'%s %s %s %s %s %s %s %s %s');
             temp2             = txt_data_first{1,4};
             yy                = str2double(temp2{1}(1:2));
             yyyy              = 2000 + yy;
@@ -234,14 +234,14 @@ elseif indx == 2
             index = sat_id_line(j);
 
             % Translate two line element data into obital elements
-            OrbitData.i(j)     = str2double(txt_data{1,3}{index+2});        % [deg]
-            OrbitData.RAAN(j)  = str2double(txt_data{1,4}{index+2});        % [deg]
-            OrbitData.omega(j) = str2double(txt_data{1,6}{index+2});        % [deg]
-            OrbitData.M(j)     = str2double(txt_data{1,7}{index+2});        % [deg]
-            n                  = str2double(txt_data{1,8}{index+2});        % [rev/day]
-            n                  = n*2*pi/24/60/60;                           % [rad/s]
-            OrbitData.a(j)     = ( mu / n^2 )^(1/3);                        % [m]
-            OrbitData.e(j)     = str2double(txt_data{1,5}{index+2})*1e-7;   % [unitless]
+            OrbitData.i(j)     = str2double(txt_data{1,3}{index+2})*(pi/180);           % [deg] to [rad/s]
+            OrbitData.RAAN(j)  = str2double(txt_data{1,4}{index+2})*(pi/180);           % [deg] to [rad/s]
+            OrbitData.omega(j) = str2double(txt_data{1,6}{index+2})*(pi/180);           % [deg] to [rad/s]
+            OrbitData.M(j)     = str2double(txt_data{1,7}{index+2})*(pi/180);           % [deg] to [rad/s]
+            n                  = str2double(txt_data{1,8}{index+2});                    % [rev/day]
+            OrbitData.n(j)     = n*2*pi/24/60/60;                                       % [rad/s]
+            OrbitData.a(j)     = ( mu / n^2 )^(1/3);                                    % [m]
+            OrbitData.e(j)     = str2double(txt_data{1,5}{index+2})*1e-7;               % [unitless]
 
             % Compute the UTC date / time
             temp2             = txt_data{1,4}{index+1};
@@ -345,12 +345,12 @@ elseif indx == 3
         txt_data_second = textscan(tle_pasted_answer{1}(index+2,1:69),'%s %s %s %s %s %s %s %s %s');
         
         % Translate two line element data into obital elements
-        OrbitData.i(j)     = str2double(txt_data_second{1,3});              % [deg]
-        OrbitData.RAAN(j)  = str2double(txt_data_second{1,4});              % [deg]
-        OrbitData.omega(j) = str2double(txt_data_second{1,6});              % [deg]
-        OrbitData.M(j)     = str2double(txt_data_second{1,7});              % [deg]
+        OrbitData.i(j)     = str2double(txt_data_second{1,3})*(pi/180);     % [deg] to [rad/s]
+        OrbitData.RAAN(j)  = str2double(txt_data_second{1,4})*(pi/180);     % [deg] to [rad/s]
+        OrbitData.omega(j) = str2double(txt_data_second{1,6})*(pi/180);     % [deg] to [rad/s]
+        OrbitData.M(j)     = str2double(txt_data_second{1,7})*(pi/180);     % [deg] to [rad/s]
         n                  = str2double(txt_data_second{1,8});              % [rev/day]
-        n                  = n*2*pi/24/60/60;                               % [rad/s]
+        OrbitData.n(j)     = n*2*pi/24/60/60;                               % [rad/s]
         OrbitData.a(j)     = ( mu / n^2 )^(1/3);                            % [m]
         OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7;         % [unitless]
 
@@ -429,6 +429,8 @@ t_end = end_time_unix;                                                          
 increment = 10;                                                                                                                 % Time increment [s]
 
 % Satellite orbit parameters
+disp(OrbitData);
+
 inclination = [98.0526*pi/180 34.9668*pi/180];                                                                                  % Inclination [degrees] converted to [rad]
 argument_periapsis = [61.2019*pi/180 271.1427*pi/180];                                                                          % Argument of the periapsis [degrees] converted to [rad]
 longitude_ascending_node = [218.7638*pi/180 53.5865*pi/180];                                                                    % Longitude of the ascending node [degrees] converted to [rad]
