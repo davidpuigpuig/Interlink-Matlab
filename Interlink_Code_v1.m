@@ -392,7 +392,7 @@ end
 
 prompt = 'Name this analysis: Log file will be yyyymmddHHMMSS-Name.txt';
 dlgtitle = 'Log file name';
-dims = [1 70];
+dims = [1 69];
 name_log = inputdlg(prompt,dlgtitle,dims);
 
 if isempty(name_log)
@@ -429,56 +429,44 @@ t_end = end_time_unix;                                                          
 increment = 10;                                                                                                                 % Time increment [s]
 
 % Satellite orbit parameters
+
+for i=1:num_satellites
+    OrbitData.epoch(i) = posixtime(datetime(char(OrbitData.date(i))));
+    OrbitData.T(i) = OrbitData.epoch(i)-OrbitData.M(i)/OrbitData.n(i);
+    OrbitData.q(i) = OrbitData.a(i)*(1-OrbitData.e(i));
+end
 disp(OrbitData);
 
-inclination = [98.0526*pi/180 34.9668*pi/180];                                                                                  % Inclination [degrees] converted to [rad]
-argument_periapsis = [61.2019*pi/180 271.1427*pi/180];                                                                          % Argument of the periapsis [degrees] converted to [rad]
-longitude_ascending_node = [218.7638*pi/180 53.5865*pi/180];                                                                    % Longitude of the ascending node [degrees] converted to [rad]
-mean_anomaly_tle = [298.9894*pi/180 88.9226*pi/180];                                                                            % Mean anomaly extracted from TLE [degrees] converted to [rad]
-mean_motion_tle = [14.69887657*2*pi/86400 15.558752725*2*pi/86400];                                                             % Unperturbed mean motion extracted from TLE [rev/day] converted to [rad/s]
-epoch_year_tle = [2008 2008];                                                                                                   % Epoch year extracted from TLE [s]
-epoch_day_tle = [142.74302347 141.84184490];                                                                                    % Epoch day extracted from TLE [s] 
-hours1 = 0.74302347*24;
-minutes1 = abs(hours1-fix(hours1))*60;
-seconds1 = abs(minutes1-fix(minutes1))*60;
-hours2 = 0.84184490*24;
-minutes2 = abs(hours2-fix(hours2))*60;
-seconds2 = abs(minutes2-fix(minutes2))*60;
-epoch = [posixtime(datetime('22-May-2008 17:49:57.2278')) posixtime(datetime('21-May-2008 20:12:15.3994'))];                    % Epoch from Unix time [s] 
-T = [epoch(1)-mean_anomaly_tle(1)/mean_motion_tle(1) epoch(2)-mean_anomaly_tle(2)/mean_motion_tle(2)];                          % Time of perifocal passage [s]
-semimajor_axis = [mu^(1/3)/(mean_motion_tle(1))^(2/3) mu^(1/3)/(mean_motion_tle(2))^(2/3)];                                     % Semi-major axis [m]
-eccentricity = [0.0007144 0.0001034];                                                                                           % Eccentricity [dimensionless]
-periapsis_distance = [semimajor_axis(1)*(1-eccentricity(1)) semimajor_axis(2)*(1-eccentricity(2))];                             % Periapsis Distance [m]
-          
 % Preallocated variables
-
-n = [0 0];                      % Unperturbed mean motion [rev/day]
-M = [0 0];                      % Mean anomaly [degrees]
-Fn = [0 0];                     % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n) [degrees or rad]
-Fn1 = [0 0];                    % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n+1) [degrees or rad] 
-f = [0 0];                      % True Anomaly [degrees]
-A = [0 0];                      % Barker's Equation parameter [degrees]
-B = [0 0];                      % Barker's Equation parameter
-C = [0 0];                      % Barker's Equation parameter
-En = [0 0];                     % Eccentric anomaly from Kepler's Equation (n) [degrees or rad]
-En1 = [0 0];                    % Eccentric anomaly from Kepler's Equation (n+1) [degrees or rad]
-Px = [0 0];                     % First component of the unit orientation vector (dynamical center-periapsis) [m] 
-Py = [0 0];                     % Second component of the unit orientation vector (dynamical center-periapsis) [m] 
-Pz = [0 0];                     % Third component of the unit orientation vector (dynamical center-periapsis) [m] 
-Qx = [0 0];                     % First component of the unit orientation vector (advanced to P by a right angle in the motion direction) [m] 
-Qy = [0 0];                     % Second component of the unit orientation vector (advanced to P by a right angle in the motion direction) [m] 
-Qz = [0 0];                     % Third component of the unit orientation vector (advanced to P by a right angle in the motion direction) [m] 
-r = [0 0];                      % Magnitude of the vector from the center of the primary body to the satellite [m]
-xi = [0 0];                     % Component of r_vector in the periapsis line [m]
-eta = [0 0];                    % Component of r_vector in the descending node line [m]
-r_fullvector = [0 0 0];         % Intermediate vector to store the pair of r_vectors [m]
-r_vector = [0 0 0; 0 0 0];      % Vector from the center of the primary body to the satellite [m]
-parameter = [0 0];              % Semi-parameter of the orbit [m]
-Rsimple1 = 0;                   % Visibility parameter [m]
-Rsimple2 = 0;                   % Visibility parameter [m]
-Rcomplex = 0;                   % Visibility parameter [m]
-Rangle = 0;                     % Visibility parameter [m]
-Rv = 0;                         % Distance from earth to satellite-satellite line
+for i=1:num_satellites
+    n = zeros(1, num_satellites);                                           % Unperturbed mean motion [rev/day]
+    M = zeros(1, num_satellites);                                           % Mean anomaly [degrees]
+    Fn = zeros(1, num_satellites);                                          % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n) [degrees or rad]
+    Fn1 = zeros(1, num_satellites);                                         % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n+1) [degrees or rad] 
+    f = zeros(1, num_satellites);                                           % True Anomaly [degrees]
+    A = zeros(1, num_satellites);                                           % Barker's Equation parameter [degrees]
+    B = zeros(1, num_satellites);                                           % Barker's Equation parameter
+    C = zeros(1, num_satellites);                                           % Barker's Equation parameter
+    En = zeros(1, num_satellites);                                          % Eccentric anomaly from Kepler's Equation (n) [degrees or rad]
+    En1 = zeros(1, num_satellites);                                         % Eccentric anomaly from Kepler's Equation (n+1) [degrees or rad]
+    Px = zeros(1, num_satellites);                                          % First component of the unit orientation vector (dynamical center-periapsis) [m] 
+    Py = zeros(1, num_satellites);                                          % Second component of the unit orientation vector (dynamical center-periapsis) [m] 
+    Pz = zeros(1, num_satellites);                                          % Third component of the unit orientation vector (dynamical center-periapsis) [m] 
+    Qx = zeros(1, num_satellites);                                          % First component of the unit orientation vector (advanced to P by a right angle in the motion direction) [m] 
+    Qy = zeros(1, num_satellites);                                          % Second component of the unit orientation vector (advanced to P by a right angle in the motion direction) [m] 
+    Qz = zeros(1, num_satellites);                                          % Third component of the unit orientation vector (advanced to P by a right angle in the motion direction) [m] 
+    r = zeros(1, num_satellites);                                           % Magnitude of the vector from the center of the primary body to the satellite [m]
+    xi = zeros(1, num_satellites);                                          % Component of r_vector in the periapsis line [m]
+    eta = zeros(1, num_satellites);                                         % Component of r_vector in the descending node line [m]
+    r_fullvector = [0 0 0];                                                 % Intermediate vector to store the pair of r_vectors [m]
+    r_vector = zeros(num_satellites, 3);                                    % Vector from the center of the primary body to the satellite [m]
+    parameter = zeros(1, num_satellites);                                   % Semi-parameter of the orbit [m]
+    Rsimple1 = 0;                                                           % Visibility parameter [m]
+    Rsimple2 = 0;                                                           % Visibility parameter [m]
+    Rcomplex = 0;                                                           % Visibility parameter [m]
+    Rangle = 0;                                                             % Visibility parameter [m]
+    Rv = 0;                                                                 % Distance from earth to satellite-satellite line
+end
 
 %% Algorithm
 
@@ -489,76 +477,76 @@ for t=t:increment:t_end % Simulation time and time discretization
     for i=1:2
 
         % Step 1 - Finding unperturbed mean motion
-        if eccentricity(i) > 1
-            n(i) = k*sqrt(mu/-semimajor_axis(i)^3);
-        elseif eccentricity(i) == 1
-            n(i) = k*sqrt(mu/(2*periapsis_distance(i)^3));
-        elseif eccentricity(i) < 1 && eccentricity(i) >= 0
-            % n(i) = k*sqrt(mu/semimajor_axis(i)^3);
-            n(i) = mean_motion_tle(i);
+        if OrbitData.e(i) > 1
+            n(i) = k*sqrt(mu/-OrbitData.a(i)^3);
+        elseif OrbitData.e(i) == 1
+            n(i) = k*sqrt(mu/(2*OrbitData.q(i)^3));
+        elseif OrbitData.e(i) < 1 && OrbitData.e(i) >= 0
+            % n(i) = k*sqrt(mu/OrbitData.a(i)^3);
+            n(i) = OrbitData.n(i);
         else
             error('Eccentricity can''t be a negative value')
         end
 
         % Step 2 - Solving Mean Anomaly
-        % M(i) = n(i)*(t-T(i));
-        M(i) = mean_anomaly_tle(i) + n(i)*(t-start_time_unix);
+        % M(i) = n(i)*(t-OrbitData.T(i));
+        M(i) = OrbitData.M(i) + n(i)*(t-start_time_unix);
 
         % Step 3 - Finding true anomaly 
-        if eccentricity(i) > 1
+        if OrbitData.e(i) > 1
             Fn(i) = 6*M(i);
             error = 1;
             while error > 1e-8
-                Fn1(i) = Fn(i) + (M(i)-eccentricity(i)*sinh(Fn(i))+Fn(i))/(eccentricity(i)*cosh(Fn(i))-1);
+                Fn1(i) = Fn(i) + (M(i)-OrbitData.e(i)*sinh(Fn(i))+Fn(i))/(OrbitData.e(i)*cosh(Fn(i))-1);
                 error = abs(Fn1(i)-Fn(i));
                 Fn(i) = Fn1(i);
             end
-            f(i) = atan((-sinh(Fn(i))*sqrt(eccentricity(i)^2-1))/(cosh(Fn(i))-eccentricity(i)));
-        elseif eccentricity(i) == 1
+            f(i) = atan((-sinh(Fn(i))*sqrt(OrbitData.e(i)^2-1))/(cosh(Fn(i))-OrbitData.e(i)));
+        elseif OrbitData.e(i) == 1
             A(i) = (3/2)*M(i);
             B(i) = (sqrt(A(i)^2+1)+A(i))^(1/3);
             C(i) = B(i)-1/B(i);
             f(i) = 2*atan(C(i));
-        elseif eccentricity(i) < 1 && eccentricity(i) >= 0
+        elseif OrbitData.e(i) < 1 && OrbitData.e(i) >= 0
             % Iteration method 1
 %             En(i) = M(i);
 %             error = 1;
 %             while error > 1e-8
-%                 En1(i) = En(i) + (M(i)-eccentricity(i)*sin(En(i))-En(i))/(1-eccentricity(i)*cos(En(i)));
+%                 En1(i) = En(i) + (M(i)-OrbitData.e(i)*sin(En(i))-En(i))/(1-OrbitData.e(i)*cos(En(i)));
 %                 error = abs(En1(i)-En(i));
 %                 En(i) = En1(i);
 %             end
 
             % Iteration method 2
             if M(i) < pi % careful with negatives
-                Einicial = M(i) + eccentricity(i)/2;
+                Einicial = M(i) + OrbitData.e(i)/2;
             else 
-                Einicial = M(i) - eccentricity(i)/2;
+                Einicial = M(i) - OrbitData.e(i)/2;
             end
             E = Einicial;
             TOL = 1;
             while TOL > 1e-8
-                fdee = E - eccentricity(i)*sin(E)-M(i);
-                fprimadee = 1-eccentricity(i)*cos(E);
+                fdee = E - OrbitData.e(i)*sin(E)-M(i);
+                fprimadee = 1-OrbitData.e(i)*cos(E);
                 TOL = abs(fdee/fprimadee);
                 En(i)=E;
                 E=E-fdee/fprimadee;
             end
-            f(i) = atan((sin(En(i))*sqrt(1-eccentricity(i)^2))/(cos(En(i))-eccentricity(i))); % TODO
+            f(i) = atan((sin(En(i))*sqrt(1-OrbitData.e(i)^2))/(cos(En(i))-OrbitData.e(i))); % TODO
         else
             error('Eccentricity can''t be a negative value')
         end
 
         % Step 4 - Finding primary body center to satellite distance
-        r(i) = (1+eccentricity(i))*periapsis_distance(i)/(1+eccentricity(i)*cos(f(i)));
+        r(i) = (1+OrbitData.e(i))*OrbitData.q(i)/(1+OrbitData.e(i)*cos(f(i)));
 
         % Step 5 - Finding standard orientation vectors
-        Px(i) = cos(argument_periapsis(i))*cos(longitude_ascending_node(i))-sin(argument_periapsis(i))*sin(longitude_ascending_node(i))*cos(inclination(i));
-        Py(i) = cos(argument_periapsis(i))*sin(longitude_ascending_node(i))+sin(argument_periapsis(i))*cos(longitude_ascending_node(i))*cos(inclination(i));
-        Pz(i) = sin(argument_periapsis(i))*sin(inclination(i));
-        Qx(i) = -sin(argument_periapsis(i))*cos(longitude_ascending_node(i))+cos(argument_periapsis(i))*sin(longitude_ascending_node(i))*cos(inclination(i));
-        Qy(i) = -sin(argument_periapsis(i))*sin(longitude_ascending_node(i))+cos(argument_periapsis(i))*cos(longitude_ascending_node(i))*cos(inclination(i));
-        Qz(i) = cos(argument_periapsis(i))*sin(inclination(i));
+        Px(i) = cos(OrbitData.omega(i))*cos(OrbitData.RAAN(i))-sin(OrbitData.omega(i))*sin(OrbitData.RAAN(i))*cos(OrbitData.i(i));
+        Py(i) = cos(OrbitData.omega(i))*sin(OrbitData.RAAN(i))+sin(OrbitData.omega(i))*cos(OrbitData.RAAN(i))*cos(OrbitData.i(i));
+        Pz(i) = sin(OrbitData.omega(i))*sin(OrbitData.i(i));
+        Qx(i) = -sin(OrbitData.omega(i))*cos(OrbitData.RAAN(i))+cos(OrbitData.omega(i))*sin(OrbitData.RAAN(i))*cos(OrbitData.i(i));
+        Qy(i) = -sin(OrbitData.omega(i))*sin(OrbitData.RAAN(i))+cos(OrbitData.omega(i))*cos(OrbitData.RAAN(i))*cos(OrbitData.i(i));
+        Qz(i) = cos(OrbitData.omega(i))*sin(OrbitData.i(i));
 
         % Step 6 - Finding components of the primary body center to satellite vector in the orbital plane
         xi(i) = r(i)*cos(f(i));
@@ -571,7 +559,7 @@ for t=t:increment:t_end % Simulation time and time discretization
         end
         
         % Step 8 - Finding Parameter or Semi-parameter
-        parameter(i) = semimajor_axis(i)*(1-eccentricity(i)^2);
+        parameter(i) = OrbitData.a(i)*(1-OrbitData.e(i)^2);
     end
     
     % Step 9 - Solving visibility equation
@@ -600,12 +588,12 @@ for t=t:increment:t_end % Simulation time and time discretization
     D2 = sqrt(A3^2+A4^2);
     
     % r1dotr2calc = r_vector(1,1)*r_vector(2,1) + r_vector(1,2)*r_vector(2,2) + r_vector(1,3)*r_vector(2,3) 
-    % r1dotr2simple = (parameter(1)*parameter(2)/((1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)))))*(A1*cos(f(1))*cos(f(2))+A3*cos(f(1))*sin(f(2))+A2*sin(f(1))*cos(f(2))+A4*sin(f(1))*sin(f(2)));
-    r1dotr2complex = (parameter(1)*parameter(2)/((1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)))))*(D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1)))+D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))));
+    % r1dotr2simple = (parameter(1)*parameter(2)/((1+OrbitData.e(1)*cos(f(1)))*(1+OrbitData.e(2)*cos(f(2)))))*(A1*cos(f(1))*cos(f(2))+A3*cos(f(1))*sin(f(2))+A2*sin(f(1))*cos(f(2))+A4*sin(f(1))*sin(f(2)));
+    r1dotr2complex = (parameter(1)*parameter(2)/((1+OrbitData.e(1)*cos(f(1)))*(1+OrbitData.e(2)*cos(f(2)))))*(D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1)))+D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))));
     % Rsimple1 = r1dotr2simple^2 - r(2)^2*r(1)^2 + (r(2)^2 + r(1)^2)*S^2 - 2*S^2*(r1dotr2simple);
     % Rsimple2 = r1dotr2complex^2 - r(2)^2*r(1)^2 + (r(2)^2 + r(1)^2)*S^2 - 2*S^2*(r1dotr2complex);
-    Rcomplex = parameter(1)^2 * parameter(2)^2 * ( D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1))) + D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))) )^2 - parameter(1)^2*parameter(2)^2 + S^2*( parameter(1)^2*(1+eccentricity(2)*cos(f(2)))^2 + parameter(2)^2*(1+eccentricity(1)*cos(f(1)))^2 ) - 2*S^2*parameter(1)*parameter(2)* ( D1*cos(f(2))* ( cos_gamma*cos(f(1))+sin_gamma*sin(f(1)) ) + D2*sin(f(2))* ( cos_psi*cos(f(1))+sin_psi*sin(f(1)) ) ) * (1+eccentricity(1)*cos(f(1))) * (1+eccentricity(2)*cos(f(2)));
-    % Rangle = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+eccentricity(2)*cos(f(2)))^2+parameter(2)^2*(1+eccentricity(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))*(1+eccentricity(1)*cos(f(1)))*(1+eccentricity(2)*cos(f(2)));
+    Rcomplex = parameter(1)^2 * parameter(2)^2 * ( D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1))) + D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))) )^2 - parameter(1)^2*parameter(2)^2 + S^2*( parameter(1)^2*(1+OrbitData.e(2)*cos(f(2)))^2 + parameter(2)^2*(1+OrbitData.e(1)*cos(f(1)))^2 ) - 2*S^2*parameter(1)*parameter(2)* ( D1*cos(f(2))* ( cos_gamma*cos(f(1))+sin_gamma*sin(f(1)) ) + D2*sin(f(2))* ( cos_psi*cos(f(1))+sin_psi*sin(f(1)) ) ) * (1+OrbitData.e(1)*cos(f(1))) * (1+OrbitData.e(2)*cos(f(2)));
+    % Rangle = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+OrbitData.e(2)*cos(f(2)))^2+parameter(2)^2*(1+OrbitData.e(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))*(1+OrbitData.e(1)*cos(f(1)))*(1+OrbitData.e(2)*cos(f(2)));
     Rv = sqrt((r(1)^2 * r(2)^2 - r1dotr2complex^2)/(r(1)^2 + r(2)^2 - 2*r1dotr2complex)) - body_radius;
     % Rv_Tot = (r(1)^2*r(2)^2-r1dotr2complex^2)/(r(1)^2 + r(2)^2-2*r1dotr2complex)
     % Rv_Numerador = r(1)^2 * r(2)^2 - r1dotr2complex^2
