@@ -13,7 +13,7 @@ clc
 % Introduction and information
 
 input_tle_list = {'Author: David Puig', 'Tutor: Miquel Sureda', 'ESEIAAT', 'Universitat Politècncia de Catalunya (UPC)'};
-[indx,tf] = listdlg('ListString',input_tle_list,'Name','InterLink','PromptString','This tool is used to analyse winodws visibility in satellite constellations','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
+[indx,tf] = listdlg('ListString',input_tle_list,'Name','InterLink','PromptString','This tool is used to analyse visibility windows in satellite constellations','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
     disp('User selected Quit');
@@ -144,14 +144,14 @@ if indx == 1
             txt_data_second = textscan(selected_example_answers{1}{index+2,1},'%s %s %s %s %s %s %s %s %s');
 
             % Translate two line element data into obital elements
-            OrbitData.i(j)     = str2double(txt_data_second{1,3})*(pi/180); % [deg] to [rad/s]
-            OrbitData.RAAN(j)  = str2double(txt_data_second{1,4})*(pi/180); % [deg] to [rad/s]
-            OrbitData.omega(j) = str2double(txt_data_second{1,6})*(pi/180); % [deg] to [rad/s]
-            OrbitData.M(j)     = str2double(txt_data_second{1,7})*(pi/180); % [deg] to [rad/s]
-            n                  = str2double(txt_data_second{1,8});          % [rev/day]
-            OrbitData.n(j)     = n*2*pi/24/60/60;                           % [rad/s]
-            OrbitData.a(j)     = ( mu / n^2 )^(1/3);                        % [m]
-            OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7;     % [unitless]
+            OrbitData.i(j)     = str2double(txt_data_second{1,3})*(pi/180); % Inclination [deg] to [rad/s]
+            OrbitData.RAAN(j)  = str2double(txt_data_second{1,4})*(pi/180); % Right ascention of the ascending node[deg] to [rad/s]
+            OrbitData.omega(j) = str2double(txt_data_second{1,6})*(pi/180); % Argument of the periapsis [deg] to [rad/s]
+            OrbitData.M(j)     = str2double(txt_data_second{1,7})*(pi/180); % Mean anomaly [deg] to [rad/s]
+            n                  = str2double(txt_data_second{1,8});          % Unperturbed mean motion [rev/day]
+            OrbitData.n(j)     = n*2*pi/24/60/60;                           % Unperturbed mean motion [rad/s]
+            OrbitData.a(j)     = ( mu / OrbitData.n(j)^2 )^(1/3);                        % Semi-major axis [m]
+            OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7;     % Eccentricity [unitless]
 
             % Compute the UTC date / time
             txt_data_first    = textscan(selected_example_answers{1}{index+1,1},'%s %s %s %s %s %s %s %s %s');
@@ -159,7 +159,7 @@ if indx == 1
             yy                = str2double(temp2{1}(1:2));
             yyyy              = 2000 + yy;
             start             = datenum([yyyy 0 0 0 0 0]);
-            secs              = str2double(temp2{1}(3:length(temp2{1})))*24*3600-2*24*3600;
+            secs              = str2double(temp2{1}(3:length(temp2{1})))*24*3600;
             date1             = datevec(addtodate(start,floor(secs),'second'));
             remainder         = [0 0 0 0 0 mod(secs,1)];
             OrbitData.date{j} = datestr(date1+remainder,'dd-mmm-yyyy HH:MM:SS.FFF');
@@ -234,21 +234,21 @@ elseif indx == 2
             index = sat_id_line(j);
 
             % Translate two line element data into obital elements
-            OrbitData.i(j)     = str2double(txt_data{1,3}{index+2})*(pi/180);           % [deg] to [rad/s]
-            OrbitData.RAAN(j)  = str2double(txt_data{1,4}{index+2})*(pi/180);           % [deg] to [rad/s]
-            OrbitData.omega(j) = str2double(txt_data{1,6}{index+2})*(pi/180);           % [deg] to [rad/s]
-            OrbitData.M(j)     = str2double(txt_data{1,7}{index+2})*(pi/180);           % [deg] to [rad/s]
-            n                  = str2double(txt_data{1,8}{index+2});                    % [rev/day]
-            OrbitData.n(j)     = n*2*pi/24/60/60;                                       % [rad/s]
-            OrbitData.a(j)     = ( mu / n^2 )^(1/3);                                    % [m]
-            OrbitData.e(j)     = str2double(txt_data{1,5}{index+2})*1e-7;               % [unitless]
+            OrbitData.i(j)     = str2double(txt_data{1,3}{index+2})*(pi/180);           % Inclination [deg] to [rad/s]
+            OrbitData.RAAN(j)  = str2double(txt_data{1,4}{index+2})*(pi/180);           % Right ascention of the ascending node[deg] to [rad/s]
+            OrbitData.omega(j) = str2double(txt_data{1,6}{index+2})*(pi/180);           % Argument of the periapsis [deg] to [rad/s]
+            OrbitData.M(j)     = str2double(txt_data{1,7}{index+2})*(pi/180);           % Mean anomaly [deg] to [rad/s]
+            n                  = str2double(txt_data{1,8}{index+2});                    % Unperturbed mean motion [rev/day]
+            OrbitData.n(j)     = n*2*pi/24/60/60;                                       % Unperturbed mean motion [rad/s]
+            OrbitData.a(j)     = ( mu / OrbitData.n(j)^2 )^(1/3);                                    % Semi-major axis [m]
+            OrbitData.e(j)     = str2double(txt_data{1,5}{index+2})*1e-7;               % Eccentricity [unitless]
 
             % Compute the UTC date / time
             temp2             = txt_data{1,4}{index+1};
             yy                = str2double(temp2(1:2));
             yyyy              = 2000 + yy;
             start             = datenum([yyyy 0 0 0 0 0]);
-            secs              = str2double(temp2(3:length(temp2)))*24*3600-2*24*3600;
+            secs              = str2double(temp2(3:length(temp2)))*24*3600;
             date1             = datevec(addtodate(start,floor(secs),'second'));
             remainder         = [0 0 0 0 0 mod(secs,1)];
             OrbitData.date{j} = datestr(date1+remainder,'dd-mmm-yyyy HH:MM:SS.FFF');
@@ -345,14 +345,14 @@ elseif indx == 3
         txt_data_second = textscan(tle_pasted_answer{1}(index+2,1:69),'%s %s %s %s %s %s %s %s %s');
         
         % Translate two line element data into obital elements
-        OrbitData.i(j)     = str2double(txt_data_second{1,3})*(pi/180);     % [deg] to [rad/s]
-        OrbitData.RAAN(j)  = str2double(txt_data_second{1,4})*(pi/180);     % [deg] to [rad/s]
-        OrbitData.omega(j) = str2double(txt_data_second{1,6})*(pi/180);     % [deg] to [rad/s]
-        OrbitData.M(j)     = str2double(txt_data_second{1,7})*(pi/180);     % [deg] to [rad/s]
-        n                  = str2double(txt_data_second{1,8});              % [rev/day]
-        OrbitData.n(j)     = n*2*pi/24/60/60;                               % [rad/s]
-        OrbitData.a(j)     = ( mu / n^2 )^(1/3);                            % [m]
-        OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7;         % [unitless]
+        OrbitData.i(j)     = str2double(txt_data_second{1,3})*(pi/180);     % Inclination [deg] to [rad/s]
+        OrbitData.RAAN(j)  = str2double(txt_data_second{1,4})*(pi/180);     % Right ascention of the ascending node[deg] to [rad/s]
+        OrbitData.omega(j) = str2double(txt_data_second{1,6})*(pi/180);     % Argument of the periapsis [deg] to [rad/s]
+        OrbitData.M(j)     = str2double(txt_data_second{1,7})*(pi/180);     % Mean anomaly [deg] to [rad/s]
+        n                  = str2double(txt_data_second{1,8});              % Unperturbed mean motion [rev/day]
+        OrbitData.n(j)     = n*2*pi/24/60/60;                               % Unperturbed mean motion [rad/s]
+        OrbitData.a(j)     = ( mu / OrbitData.n(j)^2 )^(1/3);                            % Semi-major axis [m]
+        OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7;         % Eccentricity [unitless]
 
         % Compute the UTC date / time
         txt_data_first = textscan(tle_pasted_answer{1}(index+1,1:69),'%s %s %s %s %s %s %s %s %s');
@@ -360,7 +360,7 @@ elseif indx == 3
         yy                = str2double(temp2{1}(1:2));
         yyyy              = 2000 + yy;
         start             = datenum([yyyy 0 0 0 0 0]);
-        secs              = str2double(temp2{1}(3:length(temp2{1})))*24*3600-2*24*3600;
+        secs              = str2double(temp2{1}(3:length(temp2{1})))*24*3600;
         date1             = datevec(addtodate(start,floor(secs),'second'));
         remainder         = [0 0 0 0 0 mod(secs,1)];
         OrbitData.date{j} = datestr(date1+remainder,'dd-mmm-yyyy HH:MM:SS.FFF');
@@ -482,18 +482,25 @@ for t=t:increment:t_end % Simulation time and time discretization
         elseif OrbitData.e(i) == 1
             n(i) = k*sqrt(mu/(2*OrbitData.q(i)^3));
         elseif OrbitData.e(i) < 1 && OrbitData.e(i) >= 0
+            % Mean motion method 1
             % n(i) = k*sqrt(mu/OrbitData.a(i)^3);
+            
+            % Mean motion method 2
             n(i) = OrbitData.n(i);
         else
             error('Eccentricity can''t be a negative value')
         end
 
         % Step 2 - Solving Mean Anomaly
+        % Mean anomaly method 1
         % M(i) = n(i)*(t-OrbitData.T(i));
+        
+        % Mean anomaly method 2
         M(i) = OrbitData.M(i) + n(i)*(t-start_time_unix);
 
         % Step 3 - Finding true anomaly 
         if OrbitData.e(i) > 1
+            % Iteration method 1
             Fn(i) = 6*M(i);
             error = 1;
             while error > 1e-8
@@ -501,12 +508,18 @@ for t=t:increment:t_end % Simulation time and time discretization
                 error = abs(Fn1(i)-Fn(i));
                 Fn(i) = Fn1(i);
             end
+            
+            % Iteration method 2 
+            % TODO
+            
             f(i) = atan((-sinh(Fn(i))*sqrt(OrbitData.e(i)^2-1))/(cosh(Fn(i))-OrbitData.e(i)));
+            
         elseif OrbitData.e(i) == 1
             A(i) = (3/2)*M(i);
             B(i) = (sqrt(A(i)^2+1)+A(i))^(1/3);
             C(i) = B(i)-1/B(i);
             f(i) = 2*atan(C(i));
+            
         elseif OrbitData.e(i) < 1 && OrbitData.e(i) >= 0
             % Iteration method 1
 %             En(i) = M(i);
@@ -532,7 +545,9 @@ for t=t:increment:t_end % Simulation time and time discretization
                 En(i)=E;
                 E=E-fdee/fprimadee;
             end
+            
             f(i) = atan((sin(En(i))*sqrt(1-OrbitData.e(i)^2))/(cos(En(i))-OrbitData.e(i))); % TODO
+            
         else
             error('Eccentricity can''t be a negative value')
         end
