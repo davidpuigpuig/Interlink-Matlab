@@ -3,10 +3,59 @@ format long
 close all
 clc
 
-% STUDY OF THE INTERLINK BETWEEN SMALL SATELLITES IN A CONSTELLATION
-% Author: David Puig Puig
-
-% Visual contact for two satellites analysis
+% % STUDY OF THE INTERLINK BETWEEN SMALL SATELLITES IN A CONSTELLATION
+% % Author: David Puig Puig
+% 
+% % Visual contact for two satellites analysis
+% 
+% % Add path to the Earth plotting function. 
+% addpath('C:\Users\david\Desktop\Uni\TFG\Matlab David\PlotEarth');
+% 
+% colors = lines(length(num_satellites));
+% 
+% h = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 2);
+% 
+% simStart = datenum(cl);
+% % simStart = datenum('Jan 09 2017 00:00:00');
+% 
+% % Compute sidereal time. 
+% GMST = utc2gmst(datevec(simStart)); % [rad]
+% 
+% % Create a time vector. 
+% tSim = linspace(simStart, simStart + tFinal, 200);
+% 
+% % Allocate space.
+% RSave = NaN(length(tSim), 3, length(coeDateNums));
+% 
+% % Plot the orbit.
+%     for i = 1:length(coeDateNums)
+%         colorI = k;
+%         plot3(RSave(:,1,i) / R_e, RSave(:,2,i) / R_e, RSave(:,3,i) / R_e,...
+%             'color', colors(colorI,:), 'LineWidth', 1)
+%         plot3(RSave(1,1,i) / R_e, RSave(1,2,i) / R_e, RSave(1,3,i) / R_e,...
+%             '.', 'color', colors(colorI,:), 'MarkerSize', 10)
+%         hold on
+%     end
+%     
+% %% SAVE FIGURE
+% 
+% % If you want a black background set to 'off', otherwise set to 'on' or
+% % just comment this out.
+% set(gcf, 'InvertHardCopy', 'on');
+% 
+% % Set the view angle of the figure. 
+% view([-20, 9])
+% 
+% % Reset the zoom. 
+% % zoom reset
+% zoom(1.25)
+% 
+% % Turn off axis clipping. 
+% ax = gca;               
+% ax.Clipping = 'off';    
+% 
+% % Export the figure. 
+% exportfig(gcf,horzcat(filenames{1},'Multi.tiff'),'height',6,'width',9,'fontsize',16,'LineWidth',10,'resolution',220);
 
 %% Menu module
 
@@ -388,45 +437,53 @@ elseif indx == 3
     
 end
 
-%% Log file module
+%% Simulation Parameters Preparation
 
-prompt = 'Name this analysis: Log file will be yyyymmddHHMMSS-Name.txt';
-dlgtitle = 'Log file name';
-dims = [1 69];
-name_log = inputdlg(prompt,dlgtitle,dims);
+input_simulation_list = {'From Now to Tomorrow (24h simulation)', 'Other'};
+[indx,tf] = listdlg('ListString',input_simulation_list,'Name','Simulation Time','PromptString','Select a time for your analysis:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
-if isempty(name_log)
-    disp('User selected Cancel');
+if tf == 0
+    disp('User selected Quit');
     return
 end
 
-date_log = datestr(now,'yyyymmddHHMMSS');
-full_name_log = sprintf('%s-%s.txt',date_log,name_log{1});
-
-fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', full_name_log), 'w'); % Create log file overwriting old one
-fid_log = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', full_name_log), 'a'); % Setting log file to append mode
-if fid_log == -1
-  error('Cannot open log file.');
+if indx == 1
+    % Simulation Parameters
+    % start_time = '22-May-2008 12:00:00';
+    start_time = datetime('now');
+    
+    start_time_unix = posixtime(datetime(start_time));
+    fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);                       % Command window print
+    start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
+    t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
+    
+    % end_time = '23-May-2008 00:00:00';
+    end_time = datetime('now')+days(1);
+    
+    end_time_unix = posixtime(datetime(end_time));
+    fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
+    end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
+    t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
+    increment = 10;                                                                                                                 % Time increment [s]
+else
+    prompt = {'Input simulation start:', 'Input simulation end:'};
+    dlgtitle = 'Simulation Time. Example: 22-Jan-2019 13:22:22';
+    dims = [1 70; 1 70];
+    simulation_answer = inputdlg(prompt,dlgtitle,dims);
+    start_time = simulation_answer{1};
+    end_time = simulation_answer{2};
+  
+    start_time_unix = posixtime(datetime(start_time));
+    fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);                       % Command window print
+    start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
+    fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), start_time_to_log);                                                             % Appending simulation end time to log file
+    t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
+    end_time_unix = posixtime(datetime(end_time));
+    fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
+    end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
+    t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
+    increment = 10;    
 end
-
-% Log file is closed with "fclose" function once the algorithm is ended
-
-%% Simulation Parameters Preparation
-
-% Simulation Parameters
-start_time = '22-May-2008 12:00:00';
-start_time_unix = posixtime(datetime(start_time));
-fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);                       % Command window print
-start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
-fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), start_time_to_log);                                                             % Appending simulation end time to log file
-t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
-end_time = '23-May-2008 00:00:00';
-end_time_unix = posixtime(datetime(end_time));
-fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
-end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
-fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), end_time_to_log);                                                               % Appending simulation end time to log file
-t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
-increment = 10;                                                                                                                 % Time increment [s]
 
 % Satellite orbit parameters
 
@@ -435,7 +492,6 @@ for i=1:num_satellites
     OrbitData.T(i) = OrbitData.epoch(i)-OrbitData.M(i)/OrbitData.n(i);
     OrbitData.q(i) = OrbitData.a(i)*(1-OrbitData.e(i));
 end
-disp(OrbitData);
 
 % Preallocated variables
 for i=1:num_satellites
@@ -467,6 +523,33 @@ for i=1:num_satellites
     Rangle = 0;                                                             % Visibility parameter [m]
     Rv = 0;                                                                 % Distance from earth to satellite-satellite line
 end
+
+%% Log file module
+
+prompt = 'Name this analysis: Log file will be yyyymmddHHMMSS-Name.txt';
+dlgtitle = 'Log file name';
+dims = [1 69];
+name_log = inputdlg(prompt,dlgtitle,dims);
+
+if isempty(name_log)
+    disp('User selected Cancel');
+    return
+end
+
+date_log = datestr(now,'yyyymmddHHMMSS');
+full_name_log = sprintf('%s-%s.txt',date_log,name_log{1});
+
+fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', full_name_log), 'w'); % Create log file overwriting old one
+fid_log = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', full_name_log), 'a'); % Setting log file to append mode
+if fid_log == -1
+  error('Cannot open log file.');
+end
+
+fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), start_time_to_log);         % Appending simulation start time to log file
+fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), end_time_to_log);           % Appending simulation end time to log file
+disp(OrbitData);                                                            % Print TLE parameters in command window
+
+% Log file is closed with "fclose" function once the algorithm is ended
 
 %% Algorithm
 
