@@ -416,42 +416,38 @@ end
 % Simulation Parameters
 start_time = '22-May-2008 12:00:00';
 start_time_unix = posixtime(datetime(start_time));
-fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix); % Command window print
+fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);                       % Command window print
 start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
-fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), start_time_to_log);         % Appending simulation end time to log file
-t = start_time_unix;                                                        % Start simulation time in Unix time [s]
+fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), start_time_to_log);                                                             % Appending simulation end time to log file
+t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
 end_time = '23-May-2008 00:00:00';
 end_time_unix = posixtime(datetime(end_time));
-fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix); % Command window print
+fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
 end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
-fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), end_time_to_log);           % Appending simulation end time to log file
-t_end = end_time_unix;                                                      % End of simulation time in Unix time [s]
-increment = 10;                                                             % Time increment [s]
+fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), end_time_to_log);                                                               % Appending simulation end time to log file
+t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
+increment = 10;                                                                                                                 % Time increment [s]
 
 % Satellite orbit parameters
-inclination = [98.0526*pi/180 34.9668*pi/180];                              % Inclination [degrees] converted to [rad]
-argument_periapsis = [61.2019*pi/180 271.1427*pi/180];                      % Argument of the periapsis [degrees] converted to [rad]
-longitude_ascending_node = [218.7638*pi/180 53.5865*pi/180];                % Longitude of the ascending node [degrees] converted to [rad]
-mean_anomaly_tle = [298.9894*pi/180 88.9226*pi/180];                        % Mean anomaly extracted from TLE [degrees] converted to [rad]
-mean_motion_tle = [14.69887657*2*pi/86400 15.558752725*2*pi/86400];         % Unperturbed mean motion extracted from TLE [rev/day] converted to [rad/s]
-epoch_year_tle = [2008 2008];                                               % Epoch year extracted from TLE [s]
-epoch_day_tle = [142.74302347 141.84184490];                                % Epoch day extracted from TLE [s] 
+inclination = [98.0526*pi/180 34.9668*pi/180];                                                                                  % Inclination [degrees] converted to [rad]
+argument_periapsis = [61.2019*pi/180 271.1427*pi/180];                                                                          % Argument of the periapsis [degrees] converted to [rad]
+longitude_ascending_node = [218.7638*pi/180 53.5865*pi/180];                                                                    % Longitude of the ascending node [degrees] converted to [rad]
+mean_anomaly_tle = [298.9894*pi/180 88.9226*pi/180];                                                                            % Mean anomaly extracted from TLE [degrees] converted to [rad]
+mean_motion_tle = [14.69887657*2*pi/86400 15.558752725*2*pi/86400];                                                             % Unperturbed mean motion extracted from TLE [rev/day] converted to [rad/s]
+epoch_year_tle = [2008 2008];                                                                                                   % Epoch year extracted from TLE [s]
+epoch_day_tle = [142.74302347 141.84184490];                                                                                    % Epoch day extracted from TLE [s] 
 hours1 = 0.74302347*24;
 minutes1 = abs(hours1-fix(hours1))*60;
 seconds1 = abs(minutes1-fix(minutes1))*60;
 hours2 = 0.84184490*24;
 minutes2 = abs(hours2-fix(hours2))*60;
 seconds2 = abs(minutes2-fix(minutes2))*60;
-epoch = [posixtime(datetime('22-May-2008 17:49:57.2278')); 
-         posixtime(datetime('21-May-2008 20:12:15.3994'))];                 % Epoch from Unix time [s] 
-T = [epoch(1)-mean_anomaly_tle(1)/mean_motion_tle(1) 
-     epoch(2)-mean_anomaly_tle(2)/mean_motion_tle(2)];                      % Time of perifocal passage [s]
-semimajor_axis = [mu^(1/3)/(mean_motion_tle(1))^(2/3); 
-                  mu^(1/3)/(mean_motion_tle(2))^(2/3)];                     % Semi-major axis [m]
-eccentricity = [0.0007144 0.0001034];                                       % Eccentricity [dimensionless]
-periapsis_distance = [semimajor_axis(1)*(1-eccentricity(1));
-                      semimajor_axis(2)*(1-eccentricity(2))];               % Periapsis Distance [m]
-
+epoch = [posixtime(datetime('22-May-2008 17:49:57.2278')) posixtime(datetime('21-May-2008 20:12:15.3994'))];                    % Epoch from Unix time [s] 
+T = [epoch(1)-mean_anomaly_tle(1)/mean_motion_tle(1) epoch(2)-mean_anomaly_tle(2)/mean_motion_tle(2)];                          % Time of perifocal passage [s]
+semimajor_axis = [mu^(1/3)/(mean_motion_tle(1))^(2/3) mu^(1/3)/(mean_motion_tle(2))^(2/3)];                                     % Semi-major axis [m]
+eccentricity = [0.0007144 0.0001034];                                                                                           % Eccentricity [dimensionless]
+periapsis_distance = [semimajor_axis(1)*(1-eccentricity(1)) semimajor_axis(2)*(1-eccentricity(2))];                             % Periapsis Distance [m]
+          
 % Preallocated variables
 
 n = [0 0];                      % Unperturbed mean motion [rev/day]
@@ -522,6 +518,7 @@ for t=t:increment:t_end % Simulation time and time discretization
             C(i) = B(i)-1/B(i);
             f(i) = 2*atan(C(i));
         elseif eccentricity(i) < 1 && eccentricity(i) >= 0
+            % Iteration method 1
 %             En(i) = M(i);
 %             error = 1;
 %             while error > 1e-8
@@ -529,6 +526,8 @@ for t=t:increment:t_end % Simulation time and time discretization
 %                 error = abs(En1(i)-En(i));
 %                 En(i) = En1(i);
 %             end
+
+            % Iteration method 2
             if M(i) < pi % careful with negatives
                 Einicial = M(i) + eccentricity(i)/2;
             else 
