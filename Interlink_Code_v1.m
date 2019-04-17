@@ -22,7 +22,7 @@ if tf == 0
     return
 end
 
-%% Input Parameters
+%% Input Parameters module
 
 % Input Celestial Object System
 
@@ -57,7 +57,7 @@ else
     mu = str2double(system_answer{1});              % Standard gravitational parameter [m^3/s^2]
 end
 
-% Input TLE choice module
+% TLE input menu
 input_tle_list = {'Examples', 'From .txt file (without blank lines between set)', 'Paste'};
 [indx,tf] = listdlg('ListString',input_tle_list,'Name','Two Line Element Input Choice','PromptString','Select a TLE input mode:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
@@ -391,7 +391,7 @@ elseif indx == 3
     
 end
 
-%% Simulation Parameters Preparation
+% Simulation Parameters menu
 
 input_simulation_list = {'From Now to Tomorrow (24h simulation)', 'Other'};
 [indx,tf] = listdlg('ListString',input_simulation_list,'Name','Simulation Time','PromptString','Select a time for your analysis:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
@@ -506,7 +506,7 @@ disp(OrbitData);                                                            % Pr
 
 % Log file is closed with "fclose" function once the algorithm is ended
 
-%% 3D Visuals
+%% 3D Visuals module
 
 % Add path to the Earth plotting function. 
 addpath('C:\Users\david\Desktop\Uni\TFG\Matlab David\PlotEarth');
