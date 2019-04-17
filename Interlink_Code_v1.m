@@ -438,7 +438,7 @@ else
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
 end
 
-increment = (end_time_unix-start_time_unix)/500;                                                                                                                    % Time increment [s]
+increment = (end_time_unix-start_time_unix)/500;                                                                                    % Time increment [s]
 
 % Satellite orbit parameters
 
@@ -526,7 +526,7 @@ simStart = start_time;
 GMST = utc2gmst(datevec(simStart)); % [rad]
 
 % Create a time vector
-tSim = linspace(start_time_unix, end_time_unix, 500);
+tSim = linspace(start_time_unix, end_time_unix, 501);
 
 % Allocate space
 RSave = NaN(length(tSim), 3, num_satellites);
@@ -708,12 +708,20 @@ for t=t:increment:t_end % Simulation time and time discretization
 end
 
 % Plot the orbit.
+% dot_plot = zeros(num_satellites, ((end_time_unix-start_time_unix)/increment)+1);
+
 for i = 1:num_satellites
-    colorI = num_satellites;
+    if Rcomplex < 0
+        color_visibility = [100, 255, 110] / 255; % Green color
+    else
+        color_visibility = [225, 90, 90] / 255; % Red color
+    end
+
+    legend;
     plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
-        'color', [255, 0, 0] / 255, 'LineWidth', 1)
+        'color', color_visibility,'LineWidth', 1, 'DisplayName', datestr(datetime(t,'ConvertFrom','posixtime')))
     plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
-        '.', 'color', [0, 0, 255] / 255, 'MarkerSize', 10)
+        '.', 'color', color_visibility, 'MarkerSize', 10);
     drawnow;
 end
     
