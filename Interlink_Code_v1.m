@@ -14,7 +14,7 @@ clc
 
 % Introduction and information
 
-input_tle_list = {'Author: David Puig', 'Tutor: Miquel Sureda', 'ESEIAAT', 'Universitat Politècncia de Catalunya (UPC)'};
+input_tle_list = {'Author: David Puig', 'Tutor: Miquel Sureda', 'ESEIAAT - UPC'};
 [indx,tf] = listdlg('ListString',input_tle_list,'Name','InterLink','PromptString','This tool is used to analyse visibility windows in satellite constellations','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
@@ -27,7 +27,7 @@ end
 % Input Celestial Object System
 
 input_tle_list = {'Earth', 'Other'};
-[indx,tf] = listdlg('ListString',input_tle_list,'Name','Input Celestial Object System','PromptString','Select your analysis system:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
+[indx,tf] = listdlg('ListString',input_tle_list,'Name','Celestial Object System','PromptString','Select your analysis system:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
     disp('User selected Quit');
@@ -47,7 +47,7 @@ if indx == 1
     mu = 3.986004418e14;                            % Standard gravitational parameter [m^3/s^2]
 else
     % Other system parameters
-    prompt = {'Input the primary body radius [m]:', 'Input the extra radius [m]:', 'Input mu parameter [m^3/s^2]:'};
+    prompt = {'Primary body radius [m]:', 'Extra radius (atmosphere and other effects) [m]:', 'Mu parameter [m^3/s^2]:'};
     dlgtitle = 'Celestial Object System';
     dims = [1 70; 1 70; 1 70];
     system_answer = inputdlg(prompt,dlgtitle,dims);
@@ -59,7 +59,7 @@ end
 
 % TLE input menu
 input_tle_list = {'Examples', 'From .txt file (without blank lines between set)', 'Paste'};
-[indx,tf] = listdlg('ListString',input_tle_list,'Name','Two Line Element Input Choice','PromptString','Select a TLE input mode:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
+[indx,tf] = listdlg('ListString',input_tle_list,'Name','Two Line Element (TLE)','PromptString','Select a TLE input mode:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
     disp('User selected Quit');
@@ -68,7 +68,7 @@ end
 
 if indx == 1
     input_examples_list = {'EGYPTSAT 1', 'TRMM', 'GOES 3', 'NOAA 3', 'NAVSTAR 46'};
-    [indx,tf] = listdlg('ListString',input_examples_list,'Name','Two Line Element Input Choice','PromptString','Select two or more TLE to analyse:','SelectionMode','multiple','ListSize',[500,300],'OKString','Run','CancelString','Quit');
+    [indx,tf] = listdlg('ListString',input_examples_list,'Name','Two Line Element (TLE)','PromptString','Select two or more TLE to analyse:','SelectionMode','multiple','ListSize',[500,300],'OKString','Run','CancelString','Quit');
     
     % Hard-Coded TLE as input examples
     possible_example_answers = {{'EGYPTSAT 1                                                           ';
@@ -98,7 +98,7 @@ if indx == 1
     if size(indx) == 1
         CreateStruct.Interpreter = 'tex';
         CreateStruct.WindowStyle = 'modal';
-        msgbox('A minimum of two TLE set are needed to compute satellite to satellite visibility','Error',CreateStruct);
+        msgbox('A minimum of two TLE set are needed to compute visibility','Error',CreateStruct);
         return
     else
         % TLE variables extraction
@@ -296,7 +296,7 @@ elseif indx == 3
     if number_of_tle < 2
         CreateStruct.Interpreter = 'tex';
         CreateStruct.WindowStyle = 'modal';
-        msgbox('A minimum of two TLE set are needed to compute satellite to satellite visibility','Error',CreateStruct);
+        msgbox('A minimum of two TLE set are needed to compute visibility','Error',CreateStruct);
         return
     end
     
@@ -421,7 +421,7 @@ if indx == 1
     increment = 10;                                                                                                                % Time increment [s]
     
 else
-    prompt = {'Input simulation start:', 'Input simulation end:'};
+    prompt = {'Simulation start:', 'Simulation end:'};
     dlgtitle = 'Simulation Time. Example: 22-Jan-2019 13:22:22';
     dims = [1 70; 1 70];
     simulation_answer = inputdlg(prompt,dlgtitle,dims);
@@ -481,7 +481,7 @@ end
 
 %% Log file module
 
-prompt = 'Name this analysis: Log file will be yyyymmddHHMMSS-Name.txt';
+prompt = 'Name this analysis: Log file format will be yyyymmddHHMMSS-Name.txt';
 dlgtitle = 'Log file name';
 dims = [1 69];
 name_log = inputdlg(prompt,dlgtitle,dims);
@@ -550,7 +550,7 @@ for t=t:increment:t_end % Simulation time and time discretization
             % Mean motion method 2
             n(i) = OrbitData.n(i);
         else
-            error('Eccentricity can''t be a negative value')
+            error('Eccentricity cannot be a negative value')
         end
 
         % Step 2 - Solving Mean Anomaly
@@ -610,7 +610,7 @@ for t=t:increment:t_end % Simulation time and time discretization
             f(i) = atan((sin(En(i))*sqrt(1-OrbitData.e(i)^2))/(cos(En(i))-OrbitData.e(i))); % TODO
             
         else
-            error('Eccentricity can''t be a negative value')
+            error('Eccentricity cannot be a negative value')
         end
 
         % Step 4 - Finding primary body center to satellite distance
