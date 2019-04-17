@@ -3,59 +3,10 @@ format long
 close all
 clc
 
-% % STUDY OF THE INTERLINK BETWEEN SMALL SATELLITES IN A CONSTELLATION
-% % Author: David Puig Puig
-% 
-% % Visual contact for two satellites analysis
-% 
-% % Add path to the Earth plotting function. 
-% addpath('C:\Users\david\Desktop\Uni\TFG\Matlab David\PlotEarth');
-% 
-% colors = lines(length(num_satellites));
-% 
-% h = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 2);
-% 
-% simStart = datenum(cl);
-% % simStart = datenum('Jan 09 2017 00:00:00');
-% 
-% % Compute sidereal time. 
-% GMST = utc2gmst(datevec(simStart)); % [rad]
-% 
-% % Create a time vector. 
-% tSim = linspace(simStart, simStart + tFinal, 200);
-% 
-% % Allocate space.
-% RSave = NaN(length(tSim), 3, length(coeDateNums));
-% 
-% % Plot the orbit.
-%     for i = 1:length(coeDateNums)
-%         colorI = k;
-%         plot3(RSave(:,1,i) / R_e, RSave(:,2,i) / R_e, RSave(:,3,i) / R_e,...
-%             'color', colors(colorI,:), 'LineWidth', 1)
-%         plot3(RSave(1,1,i) / R_e, RSave(1,2,i) / R_e, RSave(1,3,i) / R_e,...
-%             '.', 'color', colors(colorI,:), 'MarkerSize', 10)
-%         hold on
-%     end
-%     
-% %% SAVE FIGURE
-% 
-% % If you want a black background set to 'off', otherwise set to 'on' or
-% % just comment this out.
-% set(gcf, 'InvertHardCopy', 'on');
-% 
-% % Set the view angle of the figure. 
-% view([-20, 9])
-% 
-% % Reset the zoom. 
-% % zoom reset
-% zoom(1.25)
-% 
-% % Turn off axis clipping. 
-% ax = gca;               
-% ax.Clipping = 'off';    
-% 
-% % Export the figure. 
-% exportfig(gcf,horzcat(filenames{1},'Multi.tiff'),'height',6,'width',9,'fontsize',16,'LineWidth',10,'resolution',220);
+% STUDY OF THE INTERLINK BETWEEN SMALL SATELLITES IN A CONSTELLATION
+% Author: David Puig Puig
+
+% Visual contact for two satellites analysis
 
 %% Menu module
 
@@ -83,6 +34,7 @@ end
 
 % Common System Parameters
 
+global mu;
 k = 2*pi;      % Factor from [rev/s] to [rad/s]
 
 if indx == 1
@@ -449,22 +401,23 @@ end
 
 if indx == 1
     % Simulation Parameters
-    % start_time = '22-May-2008 12:00:00';
-    start_time = datetime('now');
+    start_time = '22-May-2008 12:00:00';
+    %start_time = datetime('now');
     
     start_time_unix = posixtime(datetime(start_time));
     fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);                       % Command window print
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     
-    % end_time = '23-May-2008 00:00:00';
-    end_time = datetime('now')+days(1);
+    end_time = '23-May-2008 00:00:00';
+    %end_time = datetime('now')+days(1);
     
     end_time_unix = posixtime(datetime(end_time));
     fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
-    increment = 10;                                                                                                                 % Time increment [s]
+    increment = 10;                                                                                                                % Time increment [s]
+    
 else
     prompt = {'Input simulation start:', 'Input simulation end:'};
     dlgtitle = 'Simulation Time. Example: 22-Jan-2019 13:22:22';
@@ -551,6 +504,31 @@ disp(OrbitData);                                                            % Pr
 
 % Log file is closed with "fclose" function once the algorithm is ended
 
+%% 3D Visuals
+
+% Add path to the Earth plotting function. 
+addpath('C:\Users\david\Desktop\Uni\TFG\Matlab David\PlotEarth');
+
+colors = lines(num_satellites);
+
+% Plot the Earth. 
+% If you want a color Earth, use 'neomap', 'BlueMarble'.
+% If you want a black and white Earth, use 'neomap', 'BlueMarble_bw'.
+% A smaller sample step gives a finer resolution Earth.
+h = plotearth('neomap', 'BlueMarble', 'SampleStep', 1);
+
+% Simulation Start Date
+simStart = start_time;
+
+% Compute sidereal time
+GMST = utc2gmst(datevec(simStart)); % [rad]
+
+% Create a time vector
+tSim = linspace(start_time_unix, start_time_unix + end_time_unix, 200);
+
+% Allocate space
+RSave = NaN(length(tSim), 3, num_satellites);
+
 %% Algorithm
 
 tic; % Runtime start
@@ -558,6 +536,15 @@ tic; % Runtime start
 for t=t:increment:t_end % Simulation time and time discretization
 
     for i=1:2
+        
+        % Adjust RAAN such that we are consisten with Earth's current
+        % orientation. This is a conversion to Longitude of the
+        % Ascending Node (LAN). 
+        OrbitData.RAAN(i) = OrbitData.RAAN(i) - GMST;
+        
+        % Convert to ECI and save the data.
+        [X,~] = COE2RV(OrbitData.a(i), OrbitData.e(i), OrbitData.i(i), OrbitData.RAAN(i), OrbitData.omega(i), OrbitData.M(i));
+        RSave(j,:,i) = X';
 
         % Step 1 - Finding unperturbed mean motion
         if OrbitData.e(i) > 1
@@ -715,10 +702,16 @@ for t=t:increment:t_end % Simulation time and time discretization
 
 end
 
-toc; % Runtime end
-
-fclose(fid_log); % Closing log file
-
+% Plot the orbit.
+    for i = num_satellites
+        colorI = num_satellites;
+        plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
+            'color', colors(1,:), 'LineWidth', 1)
+        plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
+            '.', 'color', colors(2,:), 'MarkerSize', 10)
+        hold on
+    end
+    
 %% CSV output file module
 
 fid_csv = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Output Files','InterlinkData.csv'), 'a');
