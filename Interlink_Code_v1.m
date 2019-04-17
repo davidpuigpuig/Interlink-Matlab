@@ -711,14 +711,16 @@ end
 toc;
 
 %% Plot the orbit
-% dot_plot = zeros(num_satellites, ((end_time_unix-start_time_unix)/increment)+1);
-% datestr(datetime(t,'ConvertFrom','posixtime'))
 
+% Simualtion Unix time vector converted to DateTimes strings inside a cell
+tic;
 tSim_strings = {step_count-1};
 for t=1:step_count-1
     tSim_strings{t} = datestr(datetime(tSim(t),'ConvertFrom','posixtime'));
 end
+toc;
 
+% Live 3D plot
 hold on
 for t=1:step_count-1
     for i = 1:num_satellites
@@ -727,9 +729,10 @@ for t=1:step_count-1
         else
             curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255); % Red color
         end
-        legend(tSim_strings{t});
+        lgd = legend(tSim_strings{t});
+        lgd.FontSize = 20;
         addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
-        head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', 'b');
+        head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', 'b', 'HandleVisibility', 'off');
         drawnow;
         delete(head);
     end
