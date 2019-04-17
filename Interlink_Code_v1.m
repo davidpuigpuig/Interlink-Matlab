@@ -439,6 +439,7 @@ else
 end
 
 increment = (end_time_unix-start_time_unix)/500;                                                                                    % Time increment [s]
+num_steps = ((end_time_unix-start_time_unix)/increment)+1;                                                                          % Number of time steps
 
 % Satellite orbit parameters
 
@@ -474,7 +475,7 @@ for i=1:num_satellites
     parameter = zeros(1, num_satellites);                                   % Semi-parameter of the orbit [m]
     Rsimple1 = 0;                                                           % Visibility parameter [m]
     Rsimple2 = 0;                                                           % Visibility parameter [m]
-    Rcomplex = 0;                                                           % Visibility parameter [m]
+    Rcomplex = zeros(num_steps);                                            % Visibility parameter [m]
     Rangle = 0;                                                             % Visibility parameter [m]
     Rv = 0;                                                                 % Distance from earth to satellite-satellite line
 end
@@ -680,7 +681,7 @@ for t=t:increment:t_end % Simulation time and time discretization
     r1dotr2complex = (parameter(1)*parameter(2)/((1+OrbitData.e(1)*cos(f(1)))*(1+OrbitData.e(2)*cos(f(2)))))*(D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1)))+D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))));
     % Rsimple1 = r1dotr2simple^2 - r(2)^2*r(1)^2 + (r(2)^2 + r(1)^2)*S^2 - 2*S^2*(r1dotr2simple);
     % Rsimple2 = r1dotr2complex^2 - r(2)^2*r(1)^2 + (r(2)^2 + r(1)^2)*S^2 - 2*S^2*(r1dotr2complex);
-    Rcomplex = parameter(1)^2 * parameter(2)^2 * ( D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1))) + D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))) )^2 - parameter(1)^2*parameter(2)^2 + S^2*( parameter(1)^2*(1+OrbitData.e(2)*cos(f(2)))^2 + parameter(2)^2*(1+OrbitData.e(1)*cos(f(1)))^2 ) - 2*S^2*parameter(1)*parameter(2)* ( D1*cos(f(2))* ( cos_gamma*cos(f(1))+sin_gamma*sin(f(1)) ) + D2*sin(f(2))* ( cos_psi*cos(f(1))+sin_psi*sin(f(1)) ) ) * (1+OrbitData.e(1)*cos(f(1))) * (1+OrbitData.e(2)*cos(f(2)));
+    Rcomplex(step_count) = parameter(1)^2 * parameter(2)^2 * ( D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1))) + D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))) )^2 - parameter(1)^2*parameter(2)^2 + S^2*( parameter(1)^2*(1+OrbitData.e(2)*cos(f(2)))^2 + parameter(2)^2*(1+OrbitData.e(1)*cos(f(1)))^2 ) - 2*S^2*parameter(1)*parameter(2)* ( D1*cos(f(2))* ( cos_gamma*cos(f(1))+sin_gamma*sin(f(1)) ) + D2*sin(f(2))* ( cos_psi*cos(f(1))+sin_psi*sin(f(1)) ) ) * (1+OrbitData.e(1)*cos(f(1))) * (1+OrbitData.e(2)*cos(f(2)));
     % Rangle = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+OrbitData.e(2)*cos(f(2)))^2+parameter(2)^2*(1+OrbitData.e(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))*(1+OrbitData.e(1)*cos(f(1)))*(1+OrbitData.e(2)*cos(f(2)));
     Rv = sqrt((r(1)^2 * r(2)^2 - r1dotr2complex^2)/(r(1)^2 + r(2)^2 - 2*r1dotr2complex)) - body_radius;
     % Rv_Tot = (r(1)^2*r(2)^2-r1dotr2complex^2)/(r(1)^2 + r(2)^2-2*r1dotr2complex)
@@ -692,10 +693,10 @@ for t=t:increment:t_end % Simulation time and time discretization
     visibility = '--- Direct line of sight';
     non_visibility= '--- Non-visibility';
 
-    result_to_log = sprintf(pair_result,datetime(t, 'ConvertFrom', 'posixtime'),Rcomplex);
+    result_to_log = sprintf(pair_result,datetime(t, 'ConvertFrom', 'posixtime'),Rcomplex(step_count));
     fprintf(result_to_log); % Command window print
 
-    if Rcomplex < 0
+    if Rcomplex(step_count) < 0
         disp(visibility); % Command window print
         fprintf(fid_log, '%s: %s%s\n\n', datestr(now, 0), result_to_log, visibility); % Appending visibility analysis result to log file
     else
@@ -707,24 +708,33 @@ for t=t:increment:t_end % Simulation time and time discretization
 
 end
 
-% Plot the orbit.
+toc;
+
+%% Plot the orbit
 % dot_plot = zeros(num_satellites, ((end_time_unix-start_time_unix)/increment)+1);
+% datestr(datetime(t,'ConvertFrom','posixtime'))
 
-for i = 1:num_satellites
-    if Rcomplex < 0
-        color_visibility = [100, 255, 110] / 255; % Green color
-    else
-        color_visibility = [225, 90, 90] / 255; % Red color
-    end
-
-    legend;
-    plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
-        'color', color_visibility,'LineWidth', 1, 'DisplayName', datestr(datetime(t,'ConvertFrom','posixtime')))
-    plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
-        '.', 'color', color_visibility, 'MarkerSize', 10);
-    drawnow;
+tSim_strings = {step_count-1};
+for t=1:step_count-1
+    tSim_strings{t} = datestr(datetime(tSim(t),'ConvertFrom','posixtime'));
 end
-    
+
+hold on
+for t=1:step_count-1
+    for i = 1:num_satellites
+        if Rcomplex(t) < 0
+            curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255); % Green color
+        else
+            curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255); % Red color
+        end
+        legend(tSim_strings{t});
+        addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
+        head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', 'b');
+        drawnow;
+        delete(head);
+    end
+end
+
 %% CSV output file module
 
 fid_csv = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Output Files','InterlinkData.csv'), 'a');
