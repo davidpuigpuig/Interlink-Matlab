@@ -5,6 +5,8 @@ clc
 
 % STUDY OF THE INTERLINK BETWEEN SMALL SATELLITES IN A CONSTELLATION
 % Author: David Puig Puig
+% Tutor: Miquel Sureda Anfres
+% ESEIAAT - UPC
 
 % Visual contact for two satellites analysis
 
