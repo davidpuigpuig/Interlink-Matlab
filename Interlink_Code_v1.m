@@ -503,6 +503,7 @@ end
 
 fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), start_time_to_log);         % Appending simulation start time to log file
 fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), end_time_to_log);           % Appending simulation end time to log file
+disp('TLE data collected:');
 disp(OrbitData);                                                            % Print TLE parameters in command window
 
 % Log file is closed with "fclose" function once the algorithm is ended
@@ -708,17 +709,15 @@ for t=t:increment:t_end % Simulation time and time discretization
 
 end
 
-toc;
+toc; % Runtime end
 
 %% Plot the orbit
 
 % Simualtion Unix time vector converted to DateTimes strings inside a cell
-tic;
 tSim_strings = {step_count-1};
 for t=1:step_count-1
     tSim_strings{t} = datestr(datetime(tSim(t),'ConvertFrom','posixtime'));
 end
-toc;
 
 % Live 3D plot
 hold on
