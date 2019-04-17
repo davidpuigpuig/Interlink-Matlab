@@ -438,7 +438,8 @@ else
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
 end
 
-increment = (end_time_unix-start_time_unix)/500;                                                                                    % Time increment [s]
+time_divisons = 500;
+increment = (end_time_unix-start_time_unix)/time_divisons;                                                                          % Time increment [s]
 num_steps = ((end_time_unix-start_time_unix)/increment)+1;                                                                          % Number of time steps
 
 % Satellite orbit parameters
@@ -513,8 +514,6 @@ disp(OrbitData);                                                            % Pr
 % Add path to the Earth plotting function. 
 addpath('C:\Users\david\Desktop\Uni\TFG\Matlab David\PlotEarth');
 
-colors = lines(num_satellites);
-
 % Plot the Earth. 
 % If you want a color Earth, use 'neomap', 'BlueMarble'.
 % If you want a black and white Earth, use 'neomap', 'BlueMarble_bw'.
@@ -528,7 +527,7 @@ simStart = start_time;
 GMST = utc2gmst(datevec(simStart)); % [rad]
 
 % Create a time vector
-tSim = linspace(start_time_unix, end_time_unix, 501);
+tSim = linspace(start_time_unix, end_time_unix, num_steps);
 
 % Allocate space
 RSave = NaN(length(tSim), 3, num_satellites);
@@ -536,6 +535,8 @@ RSave = NaN(length(tSim), 3, num_satellites);
 %% Algorithm
 
 tic; % Runtime start
+
+for cada un dels elements de lobjecte OrbitData
 
 step_count=1;
 
@@ -722,7 +723,7 @@ end
 % Live 3D plot
 hold on
 for t=1:step_count-1
-    for i = 1:num_satellites
+    for i = 1:2
         if Rcomplex(t) < 0
             curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255); % Green color
         else
