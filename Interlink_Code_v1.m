@@ -411,7 +411,7 @@ if indx == 1
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     
-    end_time = '22-May-2008 20:00:00';
+    end_time = '23-May-2008 12:00:00';
     %end_time = datetime('now')+days(1);
     
     end_time_unix = posixtime(datetime(end_time));
@@ -440,7 +440,7 @@ end
 
 time_divisons = 500;
 increment = (end_time_unix-start_time_unix)/time_divisons;                                                                          % Time increment [s]
-num_steps = ((end_time_unix-start_time_unix)/increment)+1;                                                                          % Number of time steps
+num_steps = round(((end_time_unix-start_time_unix)/increment)+1);                                                                   % Number of time steps
 
 % Satellite orbit parameters
 
@@ -693,11 +693,11 @@ for sat1=1:num_satellites-1
             % Rv_Denominador = r(1)^2 + r(2)^2 - 2*r1dotr2complex
 
             % Step 9: Print Results for the given epoch time 
-            pair_result = 'The result for the pair of satellites at %s is %d ';
+            pair_result = 'The result for %s and %s at %s is %d ';
             visibility = '--- Direct line of sight';
             non_visibility= '--- Non-visibility';
 
-            result_to_log = sprintf(pair_result,datetime(t, 'ConvertFrom', 'posixtime'),Rcomplex(step_count));
+            result_to_log = sprintf(pair_result, OrbitData.ID{sat1}, OrbitData.ID{sat2}, datetime(t, 'ConvertFrom', 'posixtime'), Rcomplex(step_count));
             fprintf(result_to_log); % Command window print
 
             if Rcomplex(step_count) < 0
