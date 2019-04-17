@@ -153,7 +153,7 @@ if indx == 1
             OrbitData.M(j)     = str2double(txt_data_second{1,7})*(pi/180); % Mean anomaly [deg] to [rad/s]
             n                  = str2double(txt_data_second{1,8});          % Unperturbed mean motion [rev/day]
             OrbitData.n(j)     = n*2*pi/24/60/60;                           % Unperturbed mean motion [rad/s]
-            OrbitData.a(j)     = ( mu / OrbitData.n(j)^2 )^(1/3);                        % Semi-major axis [m]
+            OrbitData.a(j)     = ( mu / OrbitData.n(j)^2 )^(1/3);           % Semi-major axis [m]
             OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7;     % Eccentricity [unitless]
 
             % Compute the UTC date / time
@@ -411,14 +411,13 @@ if indx == 1
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     
-    end_time = '23-May-2008 00:00:00';
+    end_time = '22-May-2008 20:00:00';
     %end_time = datetime('now')+days(1);
     
     end_time_unix = posixtime(datetime(end_time));
     fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
-    increment = 10;                                                                                                                % Time increment [s]
     
 else
     prompt = {'Simulation start:', 'Simulation end:'};
@@ -437,8 +436,9 @@ else
     fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
-    increment = 10;    
 end
+
+increment = (end_time_unix-start_time_unix)/500;                                                                                                                    % Time increment [s]
 
 % Satellite orbit parameters
 
@@ -526,7 +526,7 @@ simStart = start_time;
 GMST = utc2gmst(datevec(simStart)); % [rad]
 
 % Create a time vector
-tSim = linspace(start_time_unix, start_time_unix + end_time_unix, 200);
+tSim = linspace(start_time_unix, end_time_unix, 500);
 
 % Allocate space
 RSave = NaN(length(tSim), 3, num_satellites);
@@ -534,6 +534,8 @@ RSave = NaN(length(tSim), 3, num_satellites);
 %% Algorithm
 
 tic; % Runtime start
+
+step_count=1;
 
 for t=t:increment:t_end % Simulation time and time discretization
 
@@ -572,7 +574,7 @@ for t=t:increment:t_end % Simulation time and time discretization
             
             % Iteration method 2 
             % TODO
-            
+        
             f(i) = atan((-sinh(Fn(i))*sqrt(OrbitData.e(i)^2-1))/(cosh(Fn(i))-OrbitData.e(i)));
             
         elseif OrbitData.e(i) == 1
@@ -641,11 +643,11 @@ for t=t:increment:t_end % Simulation time and time discretization
         % Adjust RAAN such that we are consisten with Earth's current
         % orientation. This is a conversion to Longitude of the
         % Ascending Node (LAN). 
-        OrbitData.RAAN2(i) = OrbitData.RAAN(i) - GMST;
+        RAAN2 = OrbitData.RAAN(i) - GMST;
         
         % Convert to ECI and save the data.
-        [X,~] = COE2RV(OrbitData.a(i), OrbitData.e(i), OrbitData.i(i), OrbitData.RAAN2(i), OrbitData.omega(i), OrbitData.M(i));
-        RSave(j,:,i) = X';
+        [X,~] = COE2RV(OrbitData.a(i), OrbitData.e(i), OrbitData.i(i), RAAN2, OrbitData.omega(i), M(i));
+        RSave(step_count,:,i) = X';  
     end
     
     % Step 10 - Solving visibility equation
@@ -701,16 +703,18 @@ for t=t:increment:t_end % Simulation time and time discretization
         fprintf(fid_log, '%s: %s%s\n\n', datestr(now, 0), result_to_log, non_visibility); % Appending visibility analysis result to log file
     end
     
-    % Plot the orbit.
-    for i = num_satellites
-        colorI = num_satellites;
-        plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
-            'color', colors(1,:), 'LineWidth', 1)
-        plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
-            '.', 'color', colors(2,:), 'MarkerSize', 10)
-        drawnow;
-    end
-    
+    step_count = step_count + 1;
+
+end
+
+% Plot the orbit.
+for i = 1:num_satellites
+    colorI = num_satellites;
+    plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
+        'color', [255, 0, 0] / 255, 'LineWidth', 1)
+    plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
+        '.', 'color', [0, 0, 255] / 255, 'MarkerSize', 10)
+    drawnow;
 end
     
 %% CSV output file module
