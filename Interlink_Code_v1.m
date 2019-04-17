@@ -515,7 +515,7 @@ colors = lines(num_satellites);
 % If you want a color Earth, use 'neomap', 'BlueMarble'.
 % If you want a black and white Earth, use 'neomap', 'BlueMarble_bw'.
 % A smaller sample step gives a finer resolution Earth.
-h = plotearth('neomap', 'BlueMarble', 'SampleStep', 1);
+h = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 1);
 
 % Simulation Start Date
 simStart = start_time;
@@ -536,15 +536,6 @@ tic; % Runtime start
 for t=t:increment:t_end % Simulation time and time discretization
 
     for i=1:2
-        
-        % Adjust RAAN such that we are consisten with Earth's current
-        % orientation. This is a conversion to Longitude of the
-        % Ascending Node (LAN). 
-        OrbitData.RAAN(i) = OrbitData.RAAN(i) - GMST;
-        
-        % Convert to ECI and save the data.
-        [X,~] = COE2RV(OrbitData.a(i), OrbitData.e(i), OrbitData.i(i), OrbitData.RAAN(i), OrbitData.omega(i), OrbitData.M(i));
-        RSave(j,:,i) = X';
 
         % Step 1 - Finding unperturbed mean motion
         if OrbitData.e(i) > 1
@@ -554,7 +545,6 @@ for t=t:increment:t_end % Simulation time and time discretization
         elseif OrbitData.e(i) < 1 && OrbitData.e(i) >= 0
             % Mean motion method 1
             % n(i) = k*sqrt(mu/OrbitData.a(i)^3);
-            
             % Mean motion method 2
             n(i) = OrbitData.n(i);
         else
@@ -564,7 +554,6 @@ for t=t:increment:t_end % Simulation time and time discretization
         % Step 2 - Solving Mean Anomaly
         % Mean anomaly method 1
         % M(i) = n(i)*(t-OrbitData.T(i));
-        
         % Mean anomaly method 2
         M(i) = OrbitData.M(i) + n(i)*(t-start_time_unix);
 
@@ -645,9 +634,19 @@ for t=t:increment:t_end % Simulation time and time discretization
         
         % Step 8 - Finding Parameter or Semi-parameter
         parameter(i) = OrbitData.a(i)*(1-OrbitData.e(i)^2);
+        
+        % Step 9 - Transformation for 3D visuals
+        % Adjust RAAN such that we are consisten with Earth's current
+        % orientation. This is a conversion to Longitude of the
+        % Ascending Node (LAN). 
+        OrbitData.RAAN2(i) = OrbitData.RAAN(i) - GMST;
+        
+        % Convert to ECI and save the data.
+        [X,~] = COE2RV(OrbitData.a(i), OrbitData.e(i), OrbitData.i(i), OrbitData.RAAN2(i), OrbitData.omega(i), OrbitData.M(i));
+        RSave(j,:,i) = X';
     end
     
-    % Step 9 - Solving visibility equation
+    % Step 10 - Solving visibility equation
 
     P1 = [Px(1) Py(1) Pz(1)];
     P2 = [Px(2) Py(2) Pz(2)];
@@ -699,18 +698,18 @@ for t=t:increment:t_end % Simulation time and time discretization
         disp(non_visibility); % Command window print
         fprintf(fid_log, '%s: %s%s\n\n', datestr(now, 0), result_to_log, non_visibility); % Appending visibility analysis result to log file
     end
-
-end
-
-% Plot the orbit.
+    
+    % Plot the orbit.
     for i = num_satellites
         colorI = num_satellites;
         plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
             'color', colors(1,:), 'LineWidth', 1)
         plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
             '.', 'color', colors(2,:), 'MarkerSize', 10)
-        hold on
+        drawnow;
     end
+    
+end
     
 %% CSV output file module
 
