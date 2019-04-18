@@ -786,14 +786,15 @@ if indx == 2
     
 else
     % Static plot
-    colors = zeros(num_satellites,3);
+    colors = lines(num_satellites);
     for i=1:num_satellites
-        colors = lines(num_satellites);
         plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
-              'color', colors(i,:), 'LineWidth', 1)
+              'color', colors(i,:), 'LineWidth', 1, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Orbit'))
         plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
-              '.', 'color', colors(i,:), 'MarkerSize', 10)
+              '.', 'color', colors(i,:), 'MarkerSize', 10, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Starting Point'))
+        
     end
+    legend();
 end
 
 disp('Program ended successfully')
