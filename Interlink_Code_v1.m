@@ -732,12 +732,12 @@ toc; % Runtime end
 
 %% Plot the orbit
 
+% Static plot
 % Plot the Earth
 % If you want a color Earth, use 'neomap', 'BlueMarble'
 % If you want a black and white Earth, use 'neomap', 'BlueMarble_bw'
 % A smaller sample step gives a finer resolution Earth
 disp('Opening plot module...')
-h = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 1);
 
 % Simualtion Unix time vector converted to DateTimes strings inside a cell
 tSim_strings = {step_count-1};
@@ -745,27 +745,36 @@ for t=1:step_count-1
     tSim_strings{t} = datestr(datetime(tSim(t),'ConvertFrom','posixtime'));
 end
 
-plot_list = {'Static Plot', 'Live Plot'};
-[indx,tf] = listdlg('ListString',plot_list,'Name','3D Plot','PromptString','Select a plot mode:','SelectionMode','single','ListSize',[500,300],'OKString','Plot','CancelString','Quit');
+plot_list = {'Static Plot', 'Static Plot and Live Plot (Use color legend in Static Plot to identify satellites in Live Plot. May take a lot of time)'};
+[indx,tf] = listdlg('ListString',plot_list,'Name','3D Plot','PromptString','Select a plot mode:','SelectionMode','single','ListSize',[600,300],'OKString','Plot','CancelString','Quit');
 
 if tf == 0
     disp('User selected Quit');
     return
 end
 
-if indx == 2
+colors = lines(num_satellites);
 
+if indx == 2
+    h1 = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 1);
+    for i=1:num_satellites
+        plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
+              'color', colors(i,:), 'LineWidth', 1, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Orbit'))
+        plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
+              '.', 'color', colors(i,:), 'MarkerSize', 10, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Starting Point'))
+    end
+    lgd2 = legend('AutoUpdate', 'off');
+    
     % Live 3D plot
     num_pairs = 0;
-
+    h2 = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 1);
     for sat1=1:num_satellites-1
         
         for sat2=sat1+1:num_satellites
             num_pairs = num_pairs + 1;
             hold on
+            
             for t=1:step_count-1
-                lgd = legend(tSim_strings{t});
-                lgd.FontSize = 20;
                 for i = sat1:sat2
                     if Rcomplex(t, num_pairs) < 0
                         curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255, 'HandleVisibility', 'off'); % Green color
@@ -773,11 +782,12 @@ if indx == 2
                         curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255, 'HandleVisibility', 'off'); % Red color
                     end
                     addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
-                    head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', 'b', 'HandleVisibility', 'off');
+                    head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', colors(i,:), 'HandleVisibility', 'on');
                     drawnow;
                     delete(head);
                 end
-
+                lgd = legend(tSim_strings{t});
+                lgd.FontSize = 20;
             end
 
         end
@@ -786,15 +796,14 @@ if indx == 2
     
 else
     % Static plot
-    colors = lines(num_satellites);
+    h1 = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 1);
     for i=1:num_satellites
         plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
               'color', colors(i,:), 'LineWidth', 1, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Orbit'))
         plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
               '.', 'color', colors(i,:), 'MarkerSize', 10, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Starting Point'))
-        
     end
-    legend();
+    lgd2 = legend();
 end
 
 disp('Program ended successfully')
