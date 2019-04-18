@@ -42,7 +42,7 @@ k = 2*pi;      % Factor from [rev/s] to [rad/s]
 if indx == 1
     % Earth System parameters
     body_radius = 6.378e6;                          % Radius of the primary body [m]
-    extra_radius = 10000;                           % Extra radius for the primary body [m]
+    extra_radius = 0;                               % Extra radius for the primary body [m]
     S = body_radius + extra_radius;                 % Magnitude of the rise-set vector [m]
     mu = 3.986004418e14;                            % Standard gravitational parameter [m^3/s^2]
 else
@@ -763,15 +763,14 @@ if indx == 2
             num_pairs = num_pairs + 1;
             hold on
             for t=1:step_count-1
-
+                lgd = legend(tSim_strings{t});
+                lgd.FontSize = 20;
                 for i = sat1:sat2
                     if Rcomplex(t, num_pairs) < 0
-                        curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255); % Green color
+                        curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255, 'HandleVisibility', 'off'); % Green color
                     else
-                        curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255); % Red color
+                        curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255, 'HandleVisibility', 'off'); % Red color
                     end
-                    lgd = legend(tSim_strings{t});
-                    lgd.FontSize = 20;
                     addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
                     head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', 'b', 'HandleVisibility', 'off');
                     drawnow;
