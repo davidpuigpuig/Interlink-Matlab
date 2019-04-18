@@ -438,7 +438,7 @@ else
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
 end
 
-time_divisons = 500;
+time_divisons = 4320;
 increment = (end_time_unix-start_time_unix)/time_divisons;                                                                          % Time increment [s]
 num_steps = round(((end_time_unix-start_time_unix)/increment)+1);                                                                   % Number of time steps
 
@@ -448,6 +448,13 @@ for i=1:num_satellites
     OrbitData.epoch(i) = posixtime(datetime(char(OrbitData.date(i))));
     OrbitData.T(i) = OrbitData.epoch(i)-OrbitData.M(i)/OrbitData.n(i);
     OrbitData.q(i) = OrbitData.a(i)*(1-OrbitData.e(i));
+end
+
+num_pairs=0;
+for sat1=1:num_satellites-1
+    for sat2=sat1+1:num_satellites    
+        num_pairs = num_pairs +1; 
+    end
 end
 
 % Preallocated variables
@@ -476,7 +483,7 @@ for i=1:num_satellites
     parameter = zeros(1, num_satellites);                                   % Semi-parameter of the orbit [m]
     Rsimple1 = 0;                                                           % Visibility parameter [m]
     Rsimple2 = 0;                                                           % Visibility parameter [m]
-    Rcomplex = zeros(num_steps);                                            % Visibility parameter [m]
+    Rcomplex = zeros(num_steps, num_pairs);                                 % Visibility parameter [m]
     Rangle = 0;                                                             % Visibility parameter [m]
     Rv = 0;                                                                 % Distance from earth to satellite-satellite line
 end
@@ -530,9 +537,13 @@ RSave = NaN(length(tSim), 3, num_satellites);
 
 tic; % Runtime start
 
+num_pairs = 0;
+
 for sat1=1:num_satellites-1
     
     for sat2=sat1+1:num_satellites
+        
+        num_pairs= num_pairs + 1;
 
         step_count=1;
 
@@ -651,10 +662,10 @@ for sat1=1:num_satellites-1
 
             % Step 10 - Solving visibility equation
 
-            P1 = [Px(1) Py(1) Pz(1)];
-            P2 = [Px(2) Py(2) Pz(2)];
-            Q1 = [Qx(1) Qy(1) Qz(1)];
-            Q2 = [Qx(2) Qy(2) Qz(2)];
+            P1 = [Px(sat1) Py(sat1) Pz(sat1)];
+            P2 = [Px(sat2) Py(sat2) Pz(sat2)];
+            Q1 = [Qx(sat1) Qy(sat1) Qz(sat1)];
+            Q2 = [Qx(sat2) Qy(sat2) Qz(sat2)];
             A1 = dot(P1,P2);
             A2 = dot(Q1,P2);
             A3 = dot(P1,Q2);
@@ -676,12 +687,17 @@ for sat1=1:num_satellites-1
 
             % r1dotr2calc = r_vector(1,1)*r_vector(2,1) + r_vector(1,2)*r_vector(2,2) + r_vector(1,3)*r_vector(2,3) 
             % r1dotr2simple = (parameter(1)*parameter(2)/((1+OrbitData.e(1)*cos(f(1)))*(1+OrbitData.e(2)*cos(f(2)))))*(A1*cos(f(1))*cos(f(2))+A3*cos(f(1))*sin(f(2))+A2*sin(f(1))*cos(f(2))+A4*sin(f(1))*sin(f(2)));
-            r1dotr2complex = (parameter(1)*parameter(2)/((1+OrbitData.e(1)*cos(f(1)))*(1+OrbitData.e(2)*cos(f(2)))))*(D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1)))+D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))));
+            r1dotr2complex = (parameter(sat1)*parameter(sat2)/((1+OrbitData.e(sat1)*cos(f(sat1)))*(1+OrbitData.e(sat2)*cos(f(sat2)))))* ...
+                             (D1*cos(f(sat2))*(cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1)))+D2*sin(f(sat2))*(cos_psi*cos(f(sat1))+sin_psi*sin(f(sat1))));
             % Rsimple1 = r1dotr2simple^2 - r(2)^2*r(1)^2 + (r(2)^2 + r(1)^2)*S^2 - 2*S^2*(r1dotr2simple);
             % Rsimple2 = r1dotr2complex^2 - r(2)^2*r(1)^2 + (r(2)^2 + r(1)^2)*S^2 - 2*S^2*(r1dotr2complex);
-            Rcomplex(step_count) = parameter(1)^2 * parameter(2)^2 * ( D1*cos(f(2))*(cos_gamma*cos(f(1))+sin_gamma*sin(f(1))) + D2*sin(f(2))*(cos_psi*cos(f(1))+sin_psi*sin(f(1))) )^2 - parameter(1)^2*parameter(2)^2 + S^2*( parameter(1)^2*(1+OrbitData.e(2)*cos(f(2)))^2 + parameter(2)^2*(1+OrbitData.e(1)*cos(f(1)))^2 ) - 2*S^2*parameter(1)*parameter(2)* ( D1*cos(f(2))* ( cos_gamma*cos(f(1))+sin_gamma*sin(f(1)) ) + D2*sin(f(2))* ( cos_psi*cos(f(1))+sin_psi*sin(f(1)) ) ) * (1+OrbitData.e(1)*cos(f(1))) * (1+OrbitData.e(2)*cos(f(2)));
+            Rcomplex(step_count, num_pairs) = parameter(sat1)^2 * parameter(sat2)^2 * ( D1*cos(f(sat2))*(cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1))) + ...
+                D2*sin(f(sat2))*(cos_psi*cos(f(sat1))+sin_psi*sin(f(sat1))) )^2 - parameter(sat1)^2*parameter(sat2)^2 + S^2*( parameter(sat1)^2* ...
+                (1+OrbitData.e(sat2)*cos(f(sat2)))^2 + parameter(sat2)^2*(1+OrbitData.e(sat1)*cos(f(sat1)))^2 ) - 2*S^2*parameter(sat1)*parameter(sat2)* ...
+                ( D1*cos(f(sat2))* ( cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1)) ) + D2*sin(f(sat2))* ( cos_psi*cos(f(sat1))+sin_psi*sin(f(sat1)) ) ) * ...
+                (1+OrbitData.e(sat1)*cos(f(sat1))) * (1+OrbitData.e(sat2)*cos(f(sat2)));
             % Rangle = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+OrbitData.e(2)*cos(f(2)))^2+parameter(2)^2*(1+OrbitData.e(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))*(1+OrbitData.e(1)*cos(f(1)))*(1+OrbitData.e(2)*cos(f(2)));
-            Rv = sqrt((r(1)^2 * r(2)^2 - r1dotr2complex^2)/(r(1)^2 + r(2)^2 - 2*r1dotr2complex)) - body_radius;
+            Rv = sqrt((r(sat1)^2 * r(sat2)^2 - r1dotr2complex^2)/(r(sat1)^2 + r(sat2)^2 - 2*r1dotr2complex)) - body_radius;
             % Rv_Tot = (r(1)^2*r(2)^2-r1dotr2complex^2)/(r(1)^2 + r(2)^2-2*r1dotr2complex)
             % Rv_Numerador = r(1)^2 * r(2)^2 - r1dotr2complex^2
             % Rv_Denominador = r(1)^2 + r(2)^2 - 2*r1dotr2complex
@@ -691,10 +707,10 @@ for sat1=1:num_satellites-1
             visibility = '--- Direct line of sight';
             non_visibility= '--- Non-visibility';
 
-            result_to_log = sprintf(pair_result, OrbitData.ID{sat1}, OrbitData.designation{sat1}, OrbitData.ID{sat2}, OrbitData.designation{sat2}, datetime(t, 'ConvertFrom', 'posixtime'), Rcomplex(step_count));
+            result_to_log = sprintf(pair_result, OrbitData.ID{sat1}, OrbitData.designation{sat1}, OrbitData.ID{sat2}, OrbitData.designation{sat2}, datetime(t, 'ConvertFrom', 'posixtime'), Rcomplex(step_count, num_pairs));
             fprintf(result_to_log); % Command window print
 
-            if Rcomplex(step_count) < 0
+            if Rcomplex(step_count, num_pairs) < 0
                 disp(visibility); % Command window print
                 fprintf(fid_log, '%s: %s%s\n\n', datestr(now, 0), result_to_log, visibility); % Appending visibility analysis result to log file
             else
@@ -728,7 +744,7 @@ for t=1:step_count-1
     tSim_strings{t} = datestr(datetime(tSim(t),'ConvertFrom','posixtime'));
 end
 
-plot_list = {'Live Plot', 'Static Plot'};
+plot_list = {'Static Plot', 'Live Plot'};
 [indx,tf] = listdlg('ListString',plot_list,'Name','3D Plot','PromptString','Select a plot mode:','SelectionMode','single','ListSize',[500,300],'OKString','Plot','CancelString','Quit');
 
 if tf == 0
@@ -736,17 +752,20 @@ if tf == 0
     return
 end
 
-if indx == 1
+if indx == 2
 
-% Live 3D plot
+    % Live 3D plot
+    num_pairs = 0;
+
     for sat1=1:num_satellites-1
-
+        
         for sat2=sat1+1:num_satellites
+            num_pairs = num_pairs + 1;
             hold on
             for t=1:step_count-1
 
                 for i = sat1:sat2
-                    if Rcomplex(t) < 0
+                    if Rcomplex(t, num_pairs) < 0
                         curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255); % Green color
                     else
                         curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255); % Red color
@@ -764,6 +783,7 @@ if indx == 1
         end
 
     end
+    
 else
     % Static plot
     for i=1:num_satellites
