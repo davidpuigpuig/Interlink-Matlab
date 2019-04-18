@@ -354,7 +354,7 @@ elseif indx == 3
         OrbitData.M(j)     = str2double(txt_data_second{1,7})*(pi/180);     % Mean anomaly [deg] to [rad/s]
         n                  = str2double(txt_data_second{1,8});              % Unperturbed mean motion [rev/day]
         OrbitData.n(j)     = n*2*pi/24/60/60;                               % Unperturbed mean motion [rad/s]
-        OrbitData.a(j)     = ( mu / OrbitData.n(j)^2 )^(1/3);                            % Semi-major axis [m]
+        OrbitData.a(j)     = ( mu / OrbitData.n(j)^2 )^(1/3);               % Semi-major axis [m]
         OrbitData.e(j)     = str2double(txt_data_second{1,5})*1e-7;         % Eccentricity [unitless]
 
         % Compute the UTC date / time
@@ -438,7 +438,7 @@ else
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
 end
 
-time_divisons = 4320;
+time_divisons = 500; %4320
 increment = (end_time_unix-start_time_unix)/time_divisons;                                                                          % Time increment [s]
 num_steps = round(((end_time_unix-start_time_unix)/increment)+1);                                                                   % Number of time steps
 
@@ -519,7 +519,7 @@ disp(OrbitData);                                                            % Pr
 %% 3D Visuals module
 
 % Add path to the Earth plotting function
-addpath('C:\Users\david\Desktop\Uni\TFG\Matlab David\PlotEarth');
+addpath('C:\Users\david\Desktop\Uni\TFG\Matlab David\Plot Earth');
 
 % Simulation Start Date
 simStart = start_time;
@@ -736,6 +736,7 @@ toc; % Runtime end
 % If you want a color Earth, use 'neomap', 'BlueMarble'
 % If you want a black and white Earth, use 'neomap', 'BlueMarble_bw'
 % A smaller sample step gives a finer resolution Earth
+disp('Opening plot module...')
 h = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 1);
 
 % Simualtion Unix time vector converted to DateTimes strings inside a cell
@@ -785,17 +786,19 @@ if indx == 2
     
 else
     % Static plot
+    colors = zeros(num_satellites,3);
     for i=1:num_satellites
+        colors = lines(num_satellites);
         plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
-              'color', [225, 90, 90] / 255, 'LineWidth', 1)
+              'color', colors(i,:), 'LineWidth', 1)
         plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
-              '.', 'color', [225, 90, 90] / 255, 'MarkerSize', 10)
+              '.', 'color', colors(i,:), 'MarkerSize', 10)
     end
 end
 
 %% CSV output file module
 
-fid_csv = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Output Files','InterlinkData.csv'), 'a');
+fid_csv = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Data Output File','InterlinkData.csv'), 'a');
 toadd = (1:4);
-dlmwrite(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Output Files','InterlinkData.csv'),toadd,'-append','delimiter',';');
+dlmwrite(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Data Output File','InterlinkData.csv'),toadd,'-append','delimiter',';');
 fclose(fid_csv);
