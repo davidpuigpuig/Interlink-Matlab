@@ -15,7 +15,8 @@ clc
 % Introduction and information
 
 input_tle_list = {'Author: David Puig', 'Tutor: Miquel Sureda', 'ESEIAAT - UPC'};
-[indx,tf] = listdlg('ListString',input_tle_list,'Name','InterLink','PromptString','This tool is used to analyse visibility windows in satellite constellations','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
+[indx,tf] = listdlg('ListString',input_tle_list,'Name','InterLink','PromptString','This tool is used to analyse visibility windows in satellite constellations',...
+                    'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
     disp('User selected Quit');
@@ -27,7 +28,8 @@ end
 % Input Celestial Object System
 
 input_tle_list = {'Earth', 'Other'};
-[indx,tf] = listdlg('ListString',input_tle_list,'Name','Celestial Object System','PromptString','Select your analysis system:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
+[indx,tf] = listdlg('ListString',input_tle_list,'Name','Celestial Object System','PromptString','Select your analysis system:',...
+                    'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
     disp('User selected Quit');
@@ -59,7 +61,8 @@ end
 
 % TLE input menu
 input_tle_list = {'Examples', 'From .txt file (without blank lines between set)', 'Paste'};
-[indx,tf] = listdlg('ListString',input_tle_list,'Name','Two Line Element (TLE)','PromptString','Select a TLE input mode:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
+[indx,tf] = listdlg('ListString',input_tle_list,'Name','Two Line Element (TLE)','PromptString','Select a TLE input mode:',...
+                    'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
     disp('User selected Quit');
@@ -68,7 +71,8 @@ end
 
 if indx == 1
     input_examples_list = {'EGYPTSAT 1', 'TRMM', 'GOES 3', 'NOAA 3', 'NAVSTAR 46'};
-    [indx,tf] = listdlg('ListString',input_examples_list,'Name','Two Line Element (TLE)','PromptString','Select two or more TLE to analyse:','SelectionMode','multiple','ListSize',[500,300],'OKString','Run','CancelString','Quit');
+    [indx,tf] = listdlg('ListString',input_examples_list,'Name','Two Line Element (TLE)','PromptString','Select two or more TLE to analyse:',...
+                        'SelectionMode','multiple','ListSize',[500,300],'OKString','Run','CancelString','Quit');
     
     % Hard-Coded TLE as input examples
     possible_example_answers = {{'EGYPTSAT 1                                                           ';
@@ -394,7 +398,8 @@ end
 % Simulation Parameters menu
 
 input_simulation_list = {'From Now to Tomorrow (24h simulation)', 'Other'};
-[indx,tf] = listdlg('ListString',input_simulation_list,'Name','Simulation Time','PromptString','Select a time for your analysis:','SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
+[indx,tf] = listdlg('ListString',input_simulation_list,'Name','Simulation Time','PromptString','Select a time for your analysis:',...
+                    'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
     disp('User selected Quit');
@@ -503,8 +508,8 @@ end
 date_log = datestr(now,'yyyymmddHHMMSS');
 full_name_log = sprintf('%s-%s.txt',date_log,name_log{1});
 
-fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', full_name_log), 'w'); % Create log file overwriting old one
-fid_log = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\logs', full_name_log), 'a'); % Setting log file to append mode
+fopen(fullfile([pwd, '/logs'], full_name_log), 'w'); % Create log file overwriting old one
+fid_log = fopen(fullfile([pwd, '/logs'], full_name_log), 'a'); % Setting log file to append mode
 if fid_log == -1
   error('Cannot open log file.');
 end
@@ -518,8 +523,9 @@ disp(OrbitData);                                                            % Pr
 
 %% 3D Visuals module
 
-% Add path to the Earth plotting function
-addpath('C:\Users\david\Desktop\Uni\TFG\Matlab David\Plot Earth');
+% Add path to the Earth plotting function and TLE data preparation
+addpath([pwd, '\Plot Earth']);
+addpath([pwd, '\TLE Plotter']);
 
 % Simulation Start Date
 simStart = start_time;
@@ -764,7 +770,7 @@ if indx == 2
               '.', 'color', colors(i,:), 'MarkerSize', 10, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Starting Point'))
     end
     lgd2 = legend('AutoUpdate', 'off');
-    
+
     % Live 3D plot
     num_pairs = 0;
     h2 = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 1);
@@ -782,7 +788,7 @@ if indx == 2
                         curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255, 'HandleVisibility', 'off'); % Red color
                     end
                     addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
-                    head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', colors(i,:), 'HandleVisibility', 'on');
+                    head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', colors(i,:), 'HandleVisibility', 'off');
                     drawnow;
                     delete(head);
                 end
@@ -810,7 +816,7 @@ disp('Program ended successfully')
 
 %% CSV output file module
 
-fid_csv = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Data Output File','InterlinkData.csv'), 'a');
+fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'a');
 toadd = (1:4);
-dlmwrite(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Data Output File','InterlinkData.csv'),toadd,'-append','delimiter',';');
+dlmwrite(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'),toadd,'-append','delimiter',';');
 fclose(fid_csv);
