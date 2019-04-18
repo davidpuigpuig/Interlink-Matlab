@@ -10,6 +10,8 @@ clc
 
 % Visual contact for two satellites analysis
 
+% Reminder: All times are in UTC
+
 %% Menu module
 
 % Introduction and information
@@ -409,7 +411,7 @@ end
 if indx == 1
     % Simulation Parameters
     start_time = '22-May-2008 12:00:00';
-    %start_time = datetime('now');
+    %start_time = datetime('now', 'TimeZone', 'UTC');
     
     start_time_unix = posixtime(datetime(start_time));
     fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);                       % Command window print
@@ -417,7 +419,7 @@ if indx == 1
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     
     end_time = '23-May-2008 00:00:00';
-    %end_time = datetime('now')+days(1);
+    %end_time = datetime('now', 'TimeZone', 'UTC')+days(1);
     
     end_time_unix = posixtime(datetime(end_time));
     fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
@@ -435,7 +437,7 @@ else
     start_time_unix = posixtime(datetime(start_time));
     fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);                       % Command window print
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
-    fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), start_time_to_log);                                                             % Appending simulation end time to log file
+    fprintf(fid_log, '%s: %s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), start_time_to_log);                                                             % Appending simulation end time to log file
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     end_time_unix = posixtime(datetime(end_time));
     fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
@@ -514,8 +516,8 @@ if fid_log == -1
   error('Cannot open log file.');
 end
 
-fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), start_time_to_log);         % Appending simulation start time to log file
-fprintf(fid_log, '%s: %s\n\n', datestr(now, 0), end_time_to_log);           % Appending simulation end time to log file
+fprintf(fid_log, '%s: %s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), start_time_to_log);         % Appending simulation start time to log file
+fprintf(fid_log, '%s: %s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), end_time_to_log);           % Appending simulation end time to log file
 disp('TLE data collected:');
 disp(OrbitData);                                                            % Print TLE parameters in command window
 
@@ -718,10 +720,10 @@ for sat1=1:num_satellites-1
 
             if Rcomplex(step_count, num_pairs) < 0
                 disp(visibility); % Command window print
-                fprintf(fid_log, '%s: %s%s\n\n', datestr(now, 0), result_to_log, visibility); % Appending visibility analysis result to log file
+                fprintf(fid_log, '%s: %s%s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), result_to_log, visibility); % Appending visibility analysis result to log file
             else
                 disp(non_visibility); % Command window print
-                fprintf(fid_log, '%s: %s%s\n\n', datestr(now, 0), result_to_log, non_visibility); % Appending visibility analysis result to log file
+                fprintf(fid_log, '%s: %s%s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), result_to_log, non_visibility); % Appending visibility analysis result to log file
             end
 
             step_count = step_count + 1;
