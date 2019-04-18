@@ -796,6 +796,8 @@ else
     end
 end
 
+disp('Program ended successfully')
+
 %% CSV output file module
 
 fid_csv = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Data Output File','InterlinkData.csv'), 'a');
