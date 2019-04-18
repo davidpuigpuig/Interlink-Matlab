@@ -411,7 +411,7 @@ if indx == 1
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     
-    end_time = '23-May-2008 12:00:00';
+    end_time = '23-May-2008 00:00:00';
     %end_time = datetime('now')+days(1);
     
     end_time_unix = posixtime(datetime(end_time));
@@ -511,14 +511,8 @@ disp(OrbitData);                                                            % Pr
 
 %% 3D Visuals module
 
-% Add path to the Earth plotting function. 
+% Add path to the Earth plotting function
 addpath('C:\Users\david\Desktop\Uni\TFG\Matlab David\PlotEarth');
-
-% Plot the Earth. 
-% If you want a color Earth, use 'neomap', 'BlueMarble'.
-% If you want a black and white Earth, use 'neomap', 'BlueMarble_bw'.
-% A smaller sample step gives a finer resolution Earth.
-h = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 1);
 
 % Simulation Start Date
 simStart = start_time;
@@ -693,11 +687,11 @@ for sat1=1:num_satellites-1
             % Rv_Denominador = r(1)^2 + r(2)^2 - 2*r1dotr2complex
 
             % Step 9: Print Results for the given epoch time 
-            pair_result = 'The result for %s and %s at %s is %d ';
+            pair_result = 'The result for %s%s and %s%s at %s is %d ';
             visibility = '--- Direct line of sight';
             non_visibility= '--- Non-visibility';
 
-            result_to_log = sprintf(pair_result, OrbitData.ID{sat1}, OrbitData.ID{sat2}, datetime(t, 'ConvertFrom', 'posixtime'), Rcomplex(step_count));
+            result_to_log = sprintf(pair_result, OrbitData.ID{sat1}, OrbitData.designation{sat1}, OrbitData.ID{sat2}, OrbitData.designation{sat2}, datetime(t, 'ConvertFrom', 'posixtime'), Rcomplex(step_count));
             fprintf(result_to_log); % Command window print
 
             if Rcomplex(step_count) < 0
@@ -722,47 +716,64 @@ toc; % Runtime end
 
 %% Plot the orbit
 
+% Plot the Earth
+% If you want a color Earth, use 'neomap', 'BlueMarble'
+% If you want a black and white Earth, use 'neomap', 'BlueMarble_bw'
+% A smaller sample step gives a finer resolution Earth
+h = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 1);
+
 % Simualtion Unix time vector converted to DateTimes strings inside a cell
 tSim_strings = {step_count-1};
 for t=1:step_count-1
     tSim_strings{t} = datestr(datetime(tSim(t),'ConvertFrom','posixtime'));
 end
 
-% % Live 3D plot
-% for sat1=1:num_satellites-1
-%     
-%     for sat2=sat1+1:num_satellites
-%         hold on
-%         for t=1:step_count-1
-%             
-%             for i = sat1:sat2
-%                 if Rcomplex(t) < 0
-%                     curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255); % Green color
-%                 else
-%                     curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255); % Red color
-%                 end
-%                 lgd = legend(tSim_strings{t});
-%                 lgd.FontSize = 20;
-%                 addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
-%                 head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', 'b', 'HandleVisibility', 'off');
-%                 drawnow;
-%                 delete(head);
-%             end
-%             
-%         end
-%         
-%     end
-%     
-% end
+plot_list = {'Live Plot', 'Static Plot'};
+[indx,tf] = listdlg('ListString',plot_list,'Name','3D Plot','PromptString','Select a plot mode:','SelectionMode','single','ListSize',[500,300],'OKString','Plot','CancelString','Quit');
 
-% Static plot
-for i=1:num_satellites
-    plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
-          'color', [225, 90, 90] / 255, 'LineWidth', 1)
-    plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
-          '.', 'color', [225, 90, 90] / 255, 'MarkerSize', 10)
+if tf == 0
+    disp('User selected Quit');
+    return
 end
-   
+
+if indx == 1
+
+% Live 3D plot
+    for sat1=1:num_satellites-1
+
+        for sat2=sat1+1:num_satellites
+            hold on
+            for t=1:step_count-1
+
+                for i = sat1:sat2
+                    if Rcomplex(t) < 0
+                        curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255); % Green color
+                    else
+                        curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255); % Red color
+                    end
+                    lgd = legend(tSim_strings{t});
+                    lgd.FontSize = 20;
+                    addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
+                    head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', 'b', 'HandleVisibility', 'off');
+                    drawnow;
+                    delete(head);
+                end
+
+            end
+
+        end
+
+    end
+else
+    % Static plot
+    for i=1:num_satellites
+        plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
+              'color', [225, 90, 90] / 255, 'LineWidth', 1)
+        plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
+              '.', 'color', [225, 90, 90] / 255, 'MarkerSize', 10)
+    end
+end
+
 %% CSV output file module
 
 fid_csv = fopen(fullfile('C:\Users\david\Desktop\Uni\TFG\Matlab David\Output Files','InterlinkData.csv'), 'a');
