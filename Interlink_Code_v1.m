@@ -426,7 +426,7 @@ if indx == 1
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
     
-    time_divisions = 500; %4320
+    time_divisions = 500; %4320 is every 10 seconds for a 12h simulation
      
 else
     prompt = {'Simulation start:', 'Simulation end:', 'Time divisons (steps):'};
@@ -496,7 +496,7 @@ for i=1:num_satellites
     Rcomplex = zeros(num_steps, num_pairs);                                 % Visibility parameter [m]
     Rangle = 0;                                                             % Visibility parameter [m]
     Rv = 0;                                                                 % Distance from earth to satellite-satellite line
-    csv_data = cell(num_steps, 27, num_satellites);                         % Array of matrix to store relevant data
+    csv_data = cell(num_steps, 26, num_satellites);                         % Array of matrix to store relevant data
 end
 
 %% Log file module
@@ -531,9 +531,25 @@ disp(OrbitData);
 
 %% Populate CSV with TLE and Simulation Data
 
+for m=1:num_satellites
+    current_sat_name = strcat(OrbitData.ID{m},OrbitData.designation{m});
+    if m == 1
+        all_sat_names = current_sat_name;
+    else
+        all_sat_names = strcat(all_sat_names,'-',current_sat_name);
+    end
+end
+
 for i=1:num_steps 
     for j=1:num_satellites
         csv_data{i,1,j} = full_name_log;
+        csv_data{i,2,j} = 'Visibility Analysis';
+        csv_data{i,7,j} = num2str(num_satellites);
+        csv_data{i,8,j} = all_sat_names;
+        csv_data{i,11,j} = strcat(OrbitData.ID{j},OrbitData.designation{j});
+        csv_data{i,12,j} = OrbitData.PRN{j};
+        csv_data{i,20,j} = OrbitData.date{j};
+        csv_data{i,21,j} = OrbitData.BC(j);
     end
 end
 
@@ -679,7 +695,21 @@ for sat1=1:num_satellites-1
 
                 % Convert to ECI and save the data.
                 [X,~] = COE2RV(OrbitData.a(i), OrbitData.e(i), OrbitData.i(i), RAAN2, OrbitData.omega(i), M(i));
-                RSave(step_count,:,i) = X';  
+                RSave(step_count,:,i) = X';
+                
+                % CSV insertion
+                csv_data{step_count,13,i} = OrbitData.i(i);
+                csv_data{step_count,14,i} = OrbitData.RAAN(i);
+                csv_data{step_count,15,i} = OrbitData.omega(i);
+                csv_data{step_count,16,i} = M(i);
+                csv_data{step_count,17,i} = OrbitData.n(i);
+                csv_data{step_count,18,i} = OrbitData.a(i);
+                csv_data{step_count,19,i} = OrbitData.e(i);
+                csv_data{step_count,22,i} = f(i);
+                csv_data{step_count,23,i} = xi(i);
+                csv_data{step_count,24,i} = eta(i);
+                csv_data{step_count,25,i} = parameter(i);
+                csv_data{step_count,26,i} = r(i);
             end
 
             % Step 10 - Solving visibility equation
@@ -728,8 +758,10 @@ for sat1=1:num_satellites-1
             pair_result = 'The result for %s%s and %s%s at %s is %d ';
             visibility = '--- Direct line of sight';
             non_visibility= '--- Non-visibility';
+            
+            t_todatetime = datetime(t, 'ConvertFrom', 'posixtime');
 
-            result_to_log = sprintf(pair_result, OrbitData.ID{sat1}, OrbitData.designation{sat1}, OrbitData.ID{sat2}, OrbitData.designation{sat2}, datetime(t, 'ConvertFrom', 'posixtime'), Rcomplex(step_count, num_pairs));
+            result_to_log = sprintf(pair_result, OrbitData.ID{sat1}, OrbitData.designation{sat1}, OrbitData.ID{sat2}, OrbitData.designation{sat2}, t_todatetime, Rcomplex(step_count, num_pairs));
             fprintf(result_to_log); % Command window print
 
             if Rcomplex(step_count, num_pairs) < 0
@@ -739,7 +771,23 @@ for sat1=1:num_satellites-1
                 disp(non_visibility); % Command window print
                 fprintf(fid_log, '%s: %s%s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), result_to_log, non_visibility); % Appending visibility analysis result to log file
             end
-
+            
+            % CSV insertion
+            csv_data{step_count,3,sat1} = t_todatetime;
+            csv_data{step_count,4,sat1} = t;
+            csv_data{step_count,3,sat2} = t_todatetime;
+            csv_data{step_count,4,sat2} = t;
+            
+            csv_data{step_count,5,sat1} = strcat(OrbitData.ID{sat1},OrbitData.designation{sat1});
+            csv_data{step_count,6,sat1} = strcat(OrbitData.ID{sat2},OrbitData.designation{sat2});        
+            csv_data{step_count,5,sat2} = strcat(OrbitData.ID{sat1},OrbitData.designation{sat1});
+            csv_data{step_count,6,sat2} = strcat(OrbitData.ID{sat2},OrbitData.designation{sat2});
+                          
+            csv_data{step_count,9,sat1} = Rcomplex(step_count,num_pairs);
+            csv_data{step_count,10,sat1} = Rv;        
+            csv_data{step_count,9,sat2} = Rcomplex(step_count,num_pairs);
+            csv_data{step_count,10,sat2} = Rv;            
+            
             step_count = step_count + 1;
 
         end
@@ -758,7 +806,7 @@ fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'a');
 if fid_csv>0
     for i=1:num_steps
         for j=1:num_satellites
-            fprintf(fid_csv,'%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s',csv_data{i,:,j});
+            fprintf(fid_csv,'%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n',csv_data{i,:,j});
         end
     end
     fclose(fid_csv);
