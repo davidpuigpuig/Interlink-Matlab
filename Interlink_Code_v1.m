@@ -496,7 +496,7 @@ for i=1:num_satellites
     Rcomplex = zeros(num_steps, num_pairs);                                 % Visibility parameter [m]
     Rangle = 0;                                                             % Visibility parameter [m]
     Rv = 0;                                                                 % Distance from earth to satellite-satellite line
-    csv_data = zeros(num_steps, 27, num_satellites);                        % Array of matrix to store relevant data
+    csv_data = cell(num_steps, 27, num_satellites);                         % Array of matrix to store relevant data
 end
 
 %% Log file module
@@ -523,9 +523,15 @@ end
 fprintf(fid_log, '%s: %s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), start_time_to_log);         % Appending simulation start time to log file
 fprintf(fid_log, '%s: %s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), end_time_to_log);           % Appending simulation end time to log file
 disp('TLE data collected:');
-disp(OrbitData);                                                            % Print TLE parameters in command window
+disp(OrbitData);
+
+% Print TLE parameters in command window
 
 % Log file is closed with "fclose" function once the algorithm is ended
+
+%% Populate CSV with TLE and Simulation Data
+
+cvs_data{:,1,:} = full_name_log;
 
 %% 3D Visuals module
 
@@ -836,7 +842,17 @@ disp('Program ended successfully')
 
 %% CSV output file module
 
+% fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'a');
+% toadd = (1:27);
+% dlmwrite(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'),toadd,'-append','delimiter',';');
+% fclose(fid_csv);
+
 fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'a');
-toadd = (1:27);
-dlmwrite(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'),toadd,'-append','delimiter',';');
-fclose(fid_csv);
+if fid_csv>0
+    for i=1:num_steps
+        for j=1:num_satellites
+         fprintf(fid_csv,'%s;%s;%s\n',csv_data{i,:,j});
+        end
+    end
+    fclose(fid_csv);
+end
