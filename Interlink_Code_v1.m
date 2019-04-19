@@ -753,7 +753,7 @@ for t=1:step_count-1
     tSim_strings{t} = datestr(datetime(tSim(t),'ConvertFrom','posixtime'));
 end
 
-plot_list = {'Static Plot', 'Static Plot and Live Plot (Use color legend in Static Plot to identify satellites in Live Plot. May take a lot of time)'};
+plot_list = {'Static Plot', 'Live Plots (See color legend in 1 vs 1 plot to identify satellites. It may take a lot of time)'};
 [indx,tf] = listdlg('ListString',plot_list,'Name','3D Plot','PromptString','Select a plot mode:','SelectionMode','single','ListSize',[600,300],'OKString','Plot','CancelString','Quit');
 
 if tf == 0
@@ -785,13 +785,15 @@ if indx == 2
             for t=1:step_count-1
                 for i = sat1:sat2
                     if Rcomplex(t, num_pairs) < 0
-                        curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255, 'HandleVisibility', 'off'); % Green color
+                        curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255, 'DisplayName', 'Visibility', 'HandleVisibility', 'on'); % Green color
                     else
-                        curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255, 'HandleVisibility', 'off'); % Red color
+                        curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255, 'DisplayName', 'Non-visibility', 'HandleVisibility', 'on'); % Red color
                     end
                     addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
-                    head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', colors(i,:), 'HandleVisibility', 'off');
+                    head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', colors(i,:),... 
+                                    'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}), 'HandleVisibility', 'on');
                     drawnow;
+                    pause(0.01)
                     delete(head);
                 end
                 lgd = legend(tSim_strings{t});
