@@ -440,7 +440,6 @@ else
     start_time_unix = posixtime(datetime(start_time));
     fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);                       % Command window print
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
-    fprintf(fid_log, '%s: %s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), start_time_to_log);                                                             % Appending simulation end time to log file
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     end_time_unix = posixtime(datetime(end_time));
     fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
@@ -496,7 +495,7 @@ for i=1:num_satellites
     Rcomplex = zeros(num_steps, num_pairs);                                 % Visibility parameter [m]
     Rangle = 0;                                                             % Visibility parameter [m]
     Rv = 0;                                                                 % Distance from earth to satellite-satellite line
-    csv_data = cell(num_steps, 26, num_satellites);                         % Array of matrix to store relevant data
+    csv_data = cell(num_steps, 26, 2, num_pairs);              % Array of matrix to store relevant data
 end
 
 %% Log file module
@@ -540,16 +539,22 @@ for m=1:num_satellites
     end
 end
 
-for i=1:num_steps 
-    for j=1:num_satellites
-        csv_data{i,1,j} = full_name_log;
-        csv_data{i,2,j} = 'Visibility Analysis';
-        csv_data{i,7,j} = num2str(num_satellites);
-        csv_data{i,8,j} = all_sat_names;
-        csv_data{i,11,j} = strcat(OrbitData.ID{j},OrbitData.designation{j});
-        csv_data{i,12,j} = OrbitData.PRN{j};
-        csv_data{i,20,j} = OrbitData.date{j};
-        csv_data{i,21,j} = OrbitData.BC(j);
+num_pairs = 0;
+for sat1=1:num_satellites-1
+    for sat2=sat1+1:num_satellites
+        num_pairs = num_pairs + 1;
+        for i=1:num_steps
+            for j=sat1:sat2
+                csv_data{i,1,j,num_pairs} = full_name_log;
+                csv_data{i,2,j,num_pairs} = 'Visibility Analysis';
+                csv_data{i,7,j,num_pairs} = num2str(num_satellites);
+                csv_data{i,8,j,num_pairs} = all_sat_names;
+                csv_data{i,11,j,num_pairs} = strcat(OrbitData.ID{j},OrbitData.designation{j});
+                csv_data{i,12,j,num_pairs} = OrbitData.PRN{j};
+                csv_data{i,20,j,num_pairs} = OrbitData.date{j};
+                csv_data{i,21,j,num_pairs} = OrbitData.BC(j);
+            end
+        end
     end
 end
 
@@ -698,18 +703,18 @@ for sat1=1:num_satellites-1
                 RSave(step_count,:,i) = X';
                 
                 % CSV insertion
-                csv_data{step_count,13,i} = OrbitData.i(i);
-                csv_data{step_count,14,i} = OrbitData.RAAN(i);
-                csv_data{step_count,15,i} = OrbitData.omega(i);
-                csv_data{step_count,16,i} = M(i);
-                csv_data{step_count,17,i} = OrbitData.n(i);
-                csv_data{step_count,18,i} = OrbitData.a(i);
-                csv_data{step_count,19,i} = OrbitData.e(i);
-                csv_data{step_count,22,i} = f(i);
-                csv_data{step_count,23,i} = xi(i);
-                csv_data{step_count,24,i} = eta(i);
-                csv_data{step_count,25,i} = parameter(i);
-                csv_data{step_count,26,i} = r(i);
+                csv_data{step_count,13,i,num_pairs} = OrbitData.i(i);
+                csv_data{step_count,14,i,num_pairs} = OrbitData.RAAN(i);
+                csv_data{step_count,15,i,num_pairs} = OrbitData.omega(i);
+                csv_data{step_count,16,i,num_pairs} = M(i);
+                csv_data{step_count,17,i,num_pairs} = OrbitData.n(i);
+                csv_data{step_count,18,i,num_pairs} = OrbitData.a(i);
+                csv_data{step_count,19,i,num_pairs} = OrbitData.e(i);
+                csv_data{step_count,22,i,num_pairs} = f(i);
+                csv_data{step_count,23,i,num_pairs} = xi(i);
+                csv_data{step_count,24,i,num_pairs} = eta(i);
+                csv_data{step_count,25,i,num_pairs} = parameter(i);
+                csv_data{step_count,26,i,num_pairs} = r(i);
             end
 
             % Step 10 - Solving visibility equation
@@ -773,20 +778,20 @@ for sat1=1:num_satellites-1
             end
             
             % CSV insertion
-            csv_data{step_count,3,sat1} = t_todatetime;
-            csv_data{step_count,4,sat1} = t;
-            csv_data{step_count,3,sat2} = t_todatetime;
-            csv_data{step_count,4,sat2} = t;
+            csv_data{step_count,3,sat1,num_pairs} = t_todatetime;
+            csv_data{step_count,4,sat1,num_pairs} = t;
+            csv_data{step_count,3,sat2,num_pairs} = t_todatetime;
+            csv_data{step_count,4,sat2,num_pairs} = t;
             
-            csv_data{step_count,5,sat1} = strcat(OrbitData.ID{sat1},OrbitData.designation{sat1});
-            csv_data{step_count,6,sat1} = strcat(OrbitData.ID{sat2},OrbitData.designation{sat2});        
-            csv_data{step_count,5,sat2} = strcat(OrbitData.ID{sat1},OrbitData.designation{sat1});
-            csv_data{step_count,6,sat2} = strcat(OrbitData.ID{sat2},OrbitData.designation{sat2});
+            csv_data{step_count,5,sat1,num_pairs} = strcat(OrbitData.ID{sat1},OrbitData.designation{sat1});
+            csv_data{step_count,6,sat1,num_pairs} = strcat(OrbitData.ID{sat2},OrbitData.designation{sat2});        
+            csv_data{step_count,5,sat2,num_pairs} = strcat(OrbitData.ID{sat1},OrbitData.designation{sat1});
+            csv_data{step_count,6,sat2,num_pairs} = strcat(OrbitData.ID{sat2},OrbitData.designation{sat2});
                           
-            csv_data{step_count,9,sat1} = Rcomplex(step_count,num_pairs);
-            csv_data{step_count,10,sat1} = Rv;        
-            csv_data{step_count,9,sat2} = Rcomplex(step_count,num_pairs);
-            csv_data{step_count,10,sat2} = Rv;            
+            csv_data{step_count,9,sat1,num_pairs} = Rcomplex(step_count,num_pairs);
+            csv_data{step_count,10,sat1,num_pairs} = Rv;        
+            csv_data{step_count,9,sat2,num_pairs} = Rcomplex(step_count,num_pairs);
+            csv_data{step_count,10,sat2,num_pairs} = Rv;            
             
             step_count = step_count + 1;
 
@@ -800,17 +805,39 @@ end
 
 toc; % Runtime end
 
+fclose(fid_log); % Closing log file
+
 %% CSV output file module
 
+if isfile(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'))
+else
+    disp('Creating CSV file...')
+    fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'w');
+    if fid_csv == -1
+        error('Cannot open file');
+    end
+    headers = {'Simulation ID', 'Analysis', 'Simulation Date Time', 'Simualtion Unix Time', 'Satellite 1', 'Satellite 2', 'Satellites Number', 'Satellites Names', 'R_Visibility', 'R_Margin', 'Satellite ID', 'PRN', ...
+                'Inclination', 'RAAN', 'Argument periapsis', 'Mean Anomaly', 'Mean Motion', 'Semimajor axis', 'Eccentricity', 'TLE Date', 'Ballistic Coefficient', 'True Anomaly', 'Xi', 'Eta', 'Parameter', 'R_vector'};
+    fprintf(fid_csv,'%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n', headers{1:26});
+end
+
+disp('Inserting data to CSV file...')
 fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'a');
 if fid_csv>0
-    for i=1:num_steps
-        for j=1:num_satellites
-            fprintf(fid_csv,'%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n',csv_data{i,:,j});
+    num_pairs = 0;
+    for sat1=1:num_satellites-1
+        for sat2=sat1+1:num_satellites
+            num_pairs = num_pairs + 1;
+            for i=1:num_steps
+                for j=sat1:sat2
+                    fprintf(fid_csv,'%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n',csv_data{i,:,j,num_pairs});
+                end
+            end
         end
     end
-    fclose(fid_csv);
 end
+
+fclose(fid_csv); % Closing InterlinkData csv file
 
 %% Plot the orbit
 
