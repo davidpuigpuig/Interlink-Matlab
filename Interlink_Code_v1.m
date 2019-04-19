@@ -400,7 +400,7 @@ end
 % Simulation Parameters menu
 
 input_simulation_list = {'From Now to Tomorrow (24h simulation) and 500 time divisions', 'Other'};
-[indx,tf] = listdlg('ListString',input_simulation_list,'Name','Simulation Time','PromptString','Select a time for your analysis:',...
+[indx,tf] = listdlg('ListString',input_simulation_list,'Name','Simulation Time','PromptString','Select a UTC time for your analysis:',...
                     'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
 if tf == 0
@@ -752,6 +752,18 @@ end
 
 toc; % Runtime end
 
+%% CSV output file module
+
+fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'a');
+if fid_csv>0
+    for i=1:num_steps
+        for j=1:num_satellites
+            fprintf(fid_csv,'%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s',csv_data{i,:,j});
+        end
+    end
+    fclose(fid_csv);
+end
+
 %% Plot the orbit
 
 % Static plot
@@ -843,20 +855,3 @@ else
 end
 
 disp('Program ended successfully')
-
-%% CSV output file module
-
-% fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'a');
-% toadd = (1:27);
-% dlmwrite(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'),toadd,'-append','delimiter',';');
-% fclose(fid_csv);
-
-fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'a');
-if fid_csv>0
-    for i=1:num_steps
-        for j=1:num_satellites
-         fprintf(fid_csv,'%s;%s;%s\n',csv_data{i,:,j});
-        end
-    end
-    fclose(fid_csv);
-end
