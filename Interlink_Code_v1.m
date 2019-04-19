@@ -531,7 +531,11 @@ disp(OrbitData);
 
 %% Populate CSV with TLE and Simulation Data
 
-cvs_data{:,1,:} = full_name_log;
+for i=1:num_steps 
+    for j=1:num_satellites
+        csv_data{i,1,j} = full_name_log;
+    end
+end
 
 %% 3D Visuals module
 
