@@ -794,15 +794,22 @@ if indx == 2
                         elseif Rcomplex(t, num_pairs) >= 0 && i == sat2
                             curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255, 'DisplayName', 'Non-visibility', 'HandleVisibility', 'off'); % Red color
                         end
-                        head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', colors(i,:),... 
-                                    'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}), 'HandleVisibility', 'on');
+                        if i == sat1
+                            head1 = scatter3(RSave(t,1,sat1) / body_radius, RSave(t,2,sat1) / body_radius, RSave(t,3,sat1) / body_radius, 'filled', 'MarkerFaceColor', colors(sat1,:),... 
+                                        'DisplayName', strcat(OrbitData.ID{sat1}, OrbitData.designation{sat1}), 'HandleVisibility', 'on');
+                        elseif i == sat2
+                            head2 = scatter3(RSave(t,1,sat2) / body_radius, RSave(t,2,sat2) / body_radius, RSave(t,3,sat2) / body_radius, 'filled', 'MarkerFaceColor', colors(sat2,:),... 
+                                    'DisplayName', strcat(OrbitData.ID{sat2}, OrbitData.designation{sat2}), 'HandleVisibility', 'on');
+                        end
                         addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
                         drawnow;
                         pause(0.01)
-                        delete(head);
                     end
+                    
                     lgd = legend(tSim_strings{t});
                     lgd.FontSize = 15;
+                    delete(head1);
+                    delete(head2);
             end
 
         end
