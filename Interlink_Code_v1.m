@@ -833,6 +833,6 @@ disp('Program ended successfully')
 %% CSV output file module
 
 fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'a');
-toadd = (1:4);
+toadd = (1:10);
 dlmwrite(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'),toadd,'-append','delimiter',';');
 fclose(fid_csv);
