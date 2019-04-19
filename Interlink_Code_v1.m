@@ -783,21 +783,26 @@ if indx == 2
             hold on
             
             for t=1:step_count-1
-                for i = sat1:sat2
-                    if Rcomplex(t, num_pairs) < 0
-                        curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255, 'DisplayName', 'Visibility', 'HandleVisibility', 'on'); % Green color
-                    else
-                        curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255, 'DisplayName', 'Non-visibility', 'HandleVisibility', 'on'); % Red color
-                    end
-                    addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
-                    head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', colors(i,:),... 
+ 
+                    for i=sat1:sat2
+                        if Rcomplex(t, num_pairs) < 0 && i == sat1
+                            curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255, 'DisplayName', 'Visibility', 'HandleVisibility', 'on'); % Green color
+                        elseif Rcomplex(t, num_pairs) >= 0 && i == sat1
+                            curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255, 'DisplayName', 'Non-visibility', 'HandleVisibility', 'on'); % Red color
+                        elseif Rcomplex(t, num_pairs) < 0 && i == sat2
+                            curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255, 'DisplayName', 'Visibility', 'HandleVisibility', 'off'); % Green color
+                        elseif Rcomplex(t, num_pairs) >= 0 && i == sat2
+                            curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255, 'DisplayName', 'Non-visibility', 'HandleVisibility', 'off'); % Red color
+                        end
+                        head = scatter3(RSave(t,1,i) / body_radius, RSave(t,2,i) / body_radius, RSave(t,3,i) / body_radius, 'filled', 'MarkerFaceColor', colors(i,:),... 
                                     'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}), 'HandleVisibility', 'on');
-                    drawnow;
-                    pause(0.01)
-                    delete(head);
-                end
-                lgd = legend(tSim_strings{t});
-                lgd.FontSize = 20;
+                        addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
+                        drawnow;
+                        pause(0.01)
+                        delete(head);
+                    end
+                    lgd = legend(tSim_strings{t});
+                    lgd.FontSize = 15;
             end
 
         end
