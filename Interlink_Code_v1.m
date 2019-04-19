@@ -496,7 +496,7 @@ for i=1:num_satellites
     Rcomplex = zeros(num_steps, num_pairs);                                 % Visibility parameter [m]
     Rangle = 0;                                                             % Visibility parameter [m]
     Rv = 0;                                                                 % Distance from earth to satellite-satellite line
-    %csv_data = zeros(num_steps, variables, num_satellites);                 % Array of matrix to store relevant data
+    csv_data = zeros(num_steps, 27, num_satellites);                        % Array of matrix to store relevant data
 end
 
 %% Log file module
@@ -837,6 +837,6 @@ disp('Program ended successfully')
 %% CSV output file module
 
 fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'a');
-toadd = (1:10);
+toadd = (1:27);
 dlmwrite(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'),toadd,'-append','delimiter',';');
 fclose(fid_csv);
