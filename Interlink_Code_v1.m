@@ -399,7 +399,7 @@ end
 
 % Simulation Parameters menu
 
-input_simulation_list = {'From Now to Tomorrow (24h simulation)', 'Other'};
+input_simulation_list = {'From Now to Tomorrow (24h simulation) and 500 time divisions', 'Other'};
 [indx,tf] = listdlg('ListString',input_simulation_list,'Name','Simulation Time','PromptString','Select a time for your analysis:',...
                     'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
@@ -426,13 +426,16 @@ if indx == 1
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
     
+    time_divisions = 500; %4320
+     
 else
-    prompt = {'Simulation start:', 'Simulation end:'};
+    prompt = {'Simulation start:', 'Simulation end:', 'Time divisons (steps):'};
     dlgtitle = 'Simulation Time. Example: 22-Jan-2019 13:22:22';
-    dims = [1 70; 1 70];
+    dims = [1 70; 1 70; 1,70];
     simulation_answer = inputdlg(prompt,dlgtitle,dims);
     start_time = simulation_answer{1};
     end_time = simulation_answer{2};
+    time_divisions = str2double(simulation_answer{3});
   
     start_time_unix = posixtime(datetime(start_time));
     fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);                       % Command window print
@@ -443,11 +446,11 @@ else
     fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
+       
 end
 
-time_divisons = 500; %4320
-increment = (end_time_unix-start_time_unix)/time_divisons;                                                                          % Time increment [s]
-num_steps = round(((end_time_unix-start_time_unix)/increment)+1);                                                                   % Number of time steps
+increment = (end_time_unix-start_time_unix)/time_divisions;                                                                          % Time increment [s]
+num_steps = time_divisions+1;                                                                                                       % Number of time steps
 
 % Satellite orbit parameters
 
@@ -493,6 +496,7 @@ for i=1:num_satellites
     Rcomplex = zeros(num_steps, num_pairs);                                 % Visibility parameter [m]
     Rangle = 0;                                                             % Visibility parameter [m]
     Rv = 0;                                                                 % Distance from earth to satellite-satellite line
+    %csv_data = zeros(num_steps, variables, num_satellites);                 % Array of matrix to store relevant data
 end
 
 %% Log file module
