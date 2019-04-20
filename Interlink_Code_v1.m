@@ -426,7 +426,7 @@ if indx == 1
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
     
-    time_divisions = 500; %4320 is every 10 seconds for a 12h simulation
+    time_divisions = 4320; %4320 is every 10 seconds for a 12h simulation
      
 else
     prompt = {'Simulation start:', 'Simulation end:', 'Time divisons (steps):'};
@@ -603,18 +603,18 @@ for sat1=1:num_satellites-1
                     n(i) = k*sqrt(mu/(2*OrbitData.q(i)^3));
                 elseif OrbitData.e(i) < 1 && OrbitData.e(i) >= 0
                     % Mean motion method 1
-                    n(i) = k*sqrt(mu/OrbitData.a(i)^3);
+                    % n(i) = k*sqrt(mu/OrbitData.a(i)^3);
                     % Mean motion method 2
-                    % n(i) = OrbitData.n(i);
+                    n(i) = OrbitData.n(i);
                 else
                     error('Eccentricity cannot be a negative value')
                 end
 
                 % Step 2 - Solving Mean Anomaly
                 % Mean anomaly method 1
-                % M(i) = n(i)*(t-OrbitData.T(i));
+                M(i) = n(i)*(t-OrbitData.T(i));
                 % Mean anomaly method 2
-                M(i) = OrbitData.M(i) + n(i)*(t-start_time_unix);
+                % M(i) = OrbitData.M(i) + n(i)*(t-start_time_unix);
 
                 % Step 3 - Finding true anomaly 
                 if OrbitData.e(i) > 1
@@ -653,16 +653,6 @@ for sat1=1:num_satellites-1
                     end
 
                     f(i) = atan((sin(En(i))*sqrt(1-OrbitData.e(i)^2))/(cos(En(i))-OrbitData.e(i)));
-                    
-                    % Convert mean anomaly to true anomaly.
-                    % First, compute the eccentric anomaly.
-                    Ea = Keplers_Eqn(M(i),OrbitData.e(i));
-
-                    % Compute the true anomaly f.
-                    y = sin(Ea)*sqrt(1-OrbitData.e(i)^2)/(1-OrbitData.e(i)*cos(Ea));
-                    z = (cos(Ea)-OrbitData.e(i))/(1-OrbitData.e(i)*cos(Ea));
-
-                    f = atan2(y,z);
 
                 else
                     error('Eccentricity cannot be a negative value')
