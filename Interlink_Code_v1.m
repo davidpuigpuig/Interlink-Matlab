@@ -544,7 +544,8 @@ for sat1=1:num_satellites-1
     for sat2=sat1+1:num_satellites
         num_pairs = num_pairs + 1;
         for i=1:num_steps
-            for j=sat1:sat2
+            j = sat1;
+            for x=1:2
                 csv_data{i,1,j,num_pairs} = full_name_log;
                 csv_data{i,2,j,num_pairs} = 'Visibility Analysis';
                 csv_data{i,7,j,num_pairs} = num2str(num_satellites);
@@ -553,6 +554,7 @@ for sat1=1:num_satellites-1
                 csv_data{i,12,j,num_pairs} = OrbitData.PRN{j};
                 csv_data{i,20,j,num_pairs} = OrbitData.date{j};
                 csv_data{i,21,j,num_pairs} = OrbitData.BC(j);
+                j = sat2;
             end
         end
     end
@@ -591,8 +593,8 @@ for sat1=1:num_satellites-1
         step_count=1;
 
         for t=t:increment:t_end % Simulation time and time discretization
-
-            for i=sat1:sat2
+            i = sat1;
+            for x=1:2
 
                 % Step 1 - Finding unperturbed mean motion
                 if OrbitData.e(i) > 1
@@ -715,6 +717,8 @@ for sat1=1:num_satellites-1
                 csv_data{step_count,24,i,num_pairs} = eta(i);
                 csv_data{step_count,25,i,num_pairs} = parameter(i);
                 csv_data{step_count,26,i,num_pairs} = r(i);
+                
+                i = sat2;
             end
 
             % Step 10 - Solving visibility equation
@@ -829,8 +833,10 @@ if fid_csv>0
         for sat2=sat1+1:num_satellites
             num_pairs = num_pairs + 1;
             for i=1:num_steps
-                for j=sat1:sat2
+                j = sat1;
+                for x=1:2
                     fprintf(fid_csv,'%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n',csv_data{i,:,j,num_pairs});
+                    j = sat2;
                 end
             end
         end
@@ -884,8 +890,8 @@ if indx == 2
             hold on
             
             for t=1:step_count-1
- 
-                    for i=sat1:sat2
+                    i = sat1;
+                    for x=1:2
                         if Rcomplex(t, num_pairs) < 0 && i == sat1
                             curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255, 'DisplayName', 'Visibility', 'HandleVisibility', 'on'); % Green color
                         elseif Rcomplex(t, num_pairs) >= 0 && i == sat1
@@ -905,6 +911,7 @@ if indx == 2
                         addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
                         drawnow;
                         pause(0.01)
+                        i = sat2;
                     end
                     
                     lgd = legend(tSim_strings{t});
