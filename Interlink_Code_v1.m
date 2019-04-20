@@ -408,6 +408,8 @@ if tf == 0
     return
 end
 
+disp('Starting InterLink...')
+
 if indx == 1
     % Simulation Parameters
     start_time = '22-May-2008 12:28:30';
@@ -519,6 +521,7 @@ if fid_log == -1
   error('Cannot open log file.');
 end
 
+fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Starting InterLink...');
 fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), start_time_to_log);         % Appending simulation start time to log file
 fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), end_time_to_log);           % Appending simulation end time to log file
 fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'TLE data collected. Format: ID-designation-PRN-i-RAAN-omega-M-n-a-e-date-BC-epoch-T-q'); % Log file print
@@ -940,7 +943,7 @@ else
     lgd2 = legend();
 end
 
-disp('Program ended successfully') % Command winodow print
+disp('InterLink ended successfully') % Command winodow print
 
 fid_log = fopen(fullfile([pwd, '/logs'], full_name_log), 'a'); % Setting log file to append mode
 
@@ -948,5 +951,5 @@ if fid_log == -1
   error('Cannot open log file.');
 end
 
-fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Program ended successfully');
+fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'InterLink ended successfully');
 fclose(fid_log); % Closing log file
