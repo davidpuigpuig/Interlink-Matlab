@@ -521,11 +521,11 @@ end
 
 fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), start_time_to_log);         % Appending simulation start time to log file
 fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), end_time_to_log);           % Appending simulation end time to log file
-fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'TLE data collected:');     % Log file print
-fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'ID-designation-PRN-i-RAAN-omega-M-n-a-e-date-BC-epoch-T-q'); % Log file print
+fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'TLE data collected. Format: ID-designation-PRN-i-RAAN-omega-M-n-a-e-date-BC-epoch-T-q'); % Log file print
 for i=1:num_satellites
-    tle_log_print = strcat(OrbitData.ID(i),'-',OrbitData.designation(i),'-',OrbitData.PRN(i),'-',OrbitData.i(i),'-',OrbitData.RAAN(i),'-',OrbitData.omega(i),'-',...
-                            OrbitData.M(i),'-',OrbitData.n(i),'-',OrbitData.a(i),'-',OrbitData.e(i),'-',OrbitData.date(i),'-',OrbitData.BC(i),'-',OrbitData.epoch(i),'-',OrbitData.T(i),'-',OrbitData.q(i));
+    tle_log_print = strcat(OrbitData.ID{i},'-',OrbitData.designation{i},'-',OrbitData.PRN{i},'-',num2str(OrbitData.i(i)),'-',num2str(OrbitData.RAAN(i)),'-',num2str(OrbitData.omega(i)),'-',...
+                            num2str(OrbitData.M(i)),'-',num2str(OrbitData.n(i)),'-',num2str(OrbitData.a(i)),'-',num2str(OrbitData.e(i)),'-',OrbitData.date{i},'-',num2str(OrbitData.BC(i)),'-',...
+                            num2str(OrbitData.epoch(i)),'-',num2str(OrbitData.T(i)),'-',num2str(OrbitData.q(i)));
     fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), tle_log_print); % Log file print
 end
 disp('TLE data collected:'); % Command window print
