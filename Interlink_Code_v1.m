@@ -495,7 +495,7 @@ for i=1:num_satellites
     Rcomplex = zeros(num_steps, num_pairs);                                 % Visibility parameter [m]
     Rangle = 0;                                                             % Visibility parameter [m]
     Rv = 0;                                                                 % Distance from earth to satellite-satellite line
-    csv_data = cell(num_steps, 26, 2, num_pairs);              % Array of matrix to store relevant data
+    csv_data = cell(num_steps, 26, 2, num_pairs);                           % Array of matrix to store relevant data
 end
 
 %% Log file module
@@ -519,10 +519,17 @@ if fid_log == -1
   error('Cannot open log file.');
 end
 
-fprintf(fid_log, '%s: %s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), start_time_to_log);         % Appending simulation start time to log file
-fprintf(fid_log, '%s: %s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), end_time_to_log);           % Appending simulation end time to log file
-disp('TLE data collected:');
-disp(OrbitData);
+fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), start_time_to_log);         % Appending simulation start time to log file
+fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), end_time_to_log);           % Appending simulation end time to log file
+fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'TLE data collected:');     % Log file print
+fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'ID-designation-PRN-i-RAAN-omega-M-n-a-e-date-BC-epoch-T-q'); % Log file print
+for i=1:num_satellites
+    tle_log_print = strcat(OrbitData.ID(i),'-',OrbitData.designation(i),'-',OrbitData.PRN(i),'-',OrbitData.i(i),'-',OrbitData.RAAN(i),'-',OrbitData.omega(i),'-',...
+                            OrbitData.M(i),'-',OrbitData.n(i),'-',OrbitData.a(i),'-',OrbitData.e(i),'-',OrbitData.date(i),'-',OrbitData.BC(i),'-',OrbitData.epoch(i),'-',OrbitData.T(i),'-',OrbitData.q(i));
+    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), tle_log_print); % Log file print
+end
+disp('TLE data collected:'); % Command window print
+disp(OrbitData); % Command window print
 
 % Print TLE parameters in command window
 
@@ -763,10 +770,10 @@ for sat1=1:num_satellites-1
 
             if Rcomplex(step_count, num_pairs) < 0
                 disp(visibility); % Command window print
-                fprintf(fid_log, '%s: %s%s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), result_to_log, visibility); % Appending visibility analysis result to log file
+                fprintf(fid_log, '%s: %s%s\n', datestr(datetime('now', 'TimeZone', 'UTC')), result_to_log, visibility); % Appending visibility analysis result to log file
             else
                 disp(non_visibility); % Command window print
-                fprintf(fid_log, '%s: %s%s\n\n', datestr(datetime('now', 'TimeZone', 'UTC')), result_to_log, non_visibility); % Appending visibility analysis result to log file
+                fprintf(fid_log, '%s: %s%s\n', datestr(datetime('now', 'TimeZone', 'UTC')), result_to_log, non_visibility); % Appending visibility analysis result to log file
             end
             
             % CSV insertion
@@ -797,8 +804,6 @@ end
 
 toc; % Runtime end
 
-fclose(fid_log); % Closing log file
-
 %% CSV output file module
 
 if isfile(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'))
@@ -813,7 +818,8 @@ else
     fprintf(fid_csv,'%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n', headers{1:26});
 end
 
-disp('Inserting data to CSV file...')
+disp('Inserting data to CSV file...') % Command window print
+fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Inserting data to CSV file...'); % Log print
 fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'a');
 if fid_csv>0
     num_pairs = 0;
@@ -832,6 +838,7 @@ if fid_csv>0
 end
 
 fclose(fid_csv); % Closing InterlinkData csv file
+fclose(fid_log); % Closing log file
 
 %% Plot the orbit
 
@@ -840,7 +847,16 @@ fclose(fid_csv); % Closing InterlinkData csv file
 % If you want a color Earth, use 'neomap', 'BlueMarble'
 % If you want a black and white Earth, use 'neomap', 'BlueMarble_bw'
 % A smaller sample step gives a finer resolution Earth
-disp('Opening plot module...')
+disp('Opening plot module...') % Command window print
+
+fid_log = fopen(fullfile([pwd, '/logs'], full_name_log), 'a'); % Setting log file to append mode
+
+if fid_log == -1
+  error('Cannot open log file.');
+end
+
+fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Opening plot module...');
+fclose(fid_log); % Closing log file
 
 % Simualtion Unix time vector converted to DateTimes strings inside a cell
 tSim_strings = {step_count-1};
@@ -924,4 +940,13 @@ else
     lgd2 = legend();
 end
 
-disp('Program ended successfully')
+disp('Program ended successfully') % Command winodow print
+
+fid_log = fopen(fullfile([pwd, '/logs'], full_name_log), 'a'); % Setting log file to append mode
+
+if fid_log == -1
+  error('Cannot open log file.');
+end
+
+fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Program ended successfully');
+fclose(fid_log); % Closing log file
