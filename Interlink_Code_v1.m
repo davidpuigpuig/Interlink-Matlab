@@ -435,7 +435,7 @@ else
     simulation_answer = inputdlg(prompt,dlgtitle,dims);
     start_time = simulation_answer{1};
     end_time = simulation_answer{2};
-    time_divisions = str2double(simulation_answer{3});
+    time_divisions = round(str2double(simulation_answer{3}));
   
     start_time_unix = posixtime(datetime(start_time));
     fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);                       % Command window print
@@ -448,7 +448,7 @@ else
        
 end
 
-increment = (end_time_unix-start_time_unix)/time_divisions;                                                                          % Time increment [s]
+increment = (end_time_unix-start_time_unix)/time_divisions;                                                                         % Time increment [s]
 num_steps = time_divisions+1;                                                                                                       % Number of time steps
 
 % Satellite orbit parameters
