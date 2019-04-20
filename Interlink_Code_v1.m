@@ -603,9 +603,9 @@ for sat1=1:num_satellites-1
                     n(i) = k*sqrt(mu/(2*OrbitData.q(i)^3));
                 elseif OrbitData.e(i) < 1 && OrbitData.e(i) >= 0
                     % Mean motion method 1
-                    % n(i) = k*sqrt(mu/OrbitData.a(i)^3);
+                    n(i) = k*sqrt(mu/OrbitData.a(i)^3);
                     % Mean motion method 2
-                    n(i) = OrbitData.n(i);
+                    % n(i) = OrbitData.n(i);
                 else
                     error('Eccentricity cannot be a negative value')
                 end
@@ -627,9 +627,6 @@ for sat1=1:num_satellites-1
                         Fn(i) = Fn1(i);
                     end
 
-                    % Iteration method 2 
-                    % TODO
-
                     f(i) = atan((-sinh(Fn(i))*sqrt(OrbitData.e(i)^2-1))/(cosh(Fn(i))-OrbitData.e(i)));
 
                 elseif OrbitData.e(i) == 1
@@ -639,17 +636,8 @@ for sat1=1:num_satellites-1
                     f(i) = 2*atan(C(i));
 
                 elseif OrbitData.e(i) < 1 && OrbitData.e(i) >= 0
-                    % Iteration method 1
-        %             En(i) = M(i);
-        %             error = 1;
-        %             while error > 1e-8
-        %                 En1(i) = En(i) + (M(i)-OrbitData.e(i)*sin(En(i))-En(i))/(1-OrbitData.e(i)*cos(En(i)));
-        %                 error = abs(En1(i)-En(i));
-        %                 En(i) = En1(i);
-        %             end
-
                     % Iteration method 2
-                    if M(i) < pi % careful with negatives
+                    if M(i) < pi 
                         Einicial = M(i) + OrbitData.e(i)/2;
                     else 
                         Einicial = M(i) - OrbitData.e(i)/2;
@@ -664,7 +652,17 @@ for sat1=1:num_satellites-1
                         E=E-fdee/fprimadee;
                     end
 
-                    f(i) = atan((sin(En(i))*sqrt(1-OrbitData.e(i)^2))/(cos(En(i))-OrbitData.e(i))); % TODO
+                    f(i) = atan((sin(En(i))*sqrt(1-OrbitData.e(i)^2))/(cos(En(i))-OrbitData.e(i)));
+                    
+                    % Convert mean anomaly to true anomaly.
+                    % First, compute the eccentric anomaly.
+                    Ea = Keplers_Eqn(M(i),OrbitData.e(i));
+
+                    % Compute the true anomaly f.
+                    y = sin(Ea)*sqrt(1-OrbitData.e(i)^2)/(1-OrbitData.e(i)*cos(Ea));
+                    z = (cos(Ea)-OrbitData.e(i))/(1-OrbitData.e(i)*cos(Ea));
+
+                    f = atan2(y,z);
 
                 else
                     error('Eccentricity cannot be a negative value')
@@ -746,22 +744,22 @@ for sat1=1:num_satellites-1
             D1 = sqrt(A1^2+A2^2);
             D2 = sqrt(A3^2+A4^2);
 
-            % r1dotr2calc = r_vector(1,1)*r_vector(2,1) + r_vector(1,2)*r_vector(2,2) + r_vector(1,3)*r_vector(2,3) 
-            % r1dotr2simple = (parameter(1)*parameter(2)/((1+OrbitData.e(1)*cos(f(1)))*(1+OrbitData.e(2)*cos(f(2)))))*(A1*cos(f(1))*cos(f(2))+A3*cos(f(1))*sin(f(2))+A2*sin(f(1))*cos(f(2))+A4*sin(f(1))*sin(f(2)));
+            % r1dotr2calc = r_vector(sat1,1)*r_vector(sat2,1) + r_vector(sat1,2)*r_vector(sat2,2) + r_vector(sat1,3)*r_vector(sat2,3) 
+            % r1dotr2simple = (parameter(sat1)*parameter(sat2)/((1+OrbitData.e(sat1)*cos(f(sat1)))*(1+OrbitData.e(sat2)*cos(f(sat2)))))*(A1*cos(f(sat1))*cos(f(sat2))+A3*cos(f(sat1))*sin(f(sat2))+A2*sin(f(sat1))*cos(f(sat2))+A4*sin(f(sat1))*sin(f(sat2)));
             r1dotr2complex = (parameter(sat1)*parameter(sat2)/((1+OrbitData.e(sat1)*cos(f(sat1)))*(1+OrbitData.e(sat2)*cos(f(sat2)))))* ...
                              (D1*cos(f(sat2))*(cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1)))+D2*sin(f(sat2))*(cos_psi*cos(f(sat1))+sin_psi*sin(f(sat1))));
-            % Rsimple1 = r1dotr2simple^2 - r(2)^2*r(1)^2 + (r(2)^2 + r(1)^2)*S^2 - 2*S^2*(r1dotr2simple);
-            % Rsimple2 = r1dotr2complex^2 - r(2)^2*r(1)^2 + (r(2)^2 + r(1)^2)*S^2 - 2*S^2*(r1dotr2complex);
+            % Rsimple1 = r1dotr2simple^2 - r(sat2)^2*r(sat1)^2 + (r(sat2)^2 + r(sat1)^2)*S^2 - 2*S^2*(r1dotr2simple);
+            % Rsimple2 = r1dotr2complex^2 - r(sat2)^2*r(sat1)^2 + (r(sat2)^2 + r(sat1)^2)*S^2 - 2*S^2*(r1dotr2complex);
             Rcomplex(step_count, num_pairs) = parameter(sat1)^2 * parameter(sat2)^2 * ( D1*cos(f(sat2))*(cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1))) + ...
                 D2*sin(f(sat2))*(cos_psi*cos(f(sat1))+sin_psi*sin(f(sat1))) )^2 - parameter(sat1)^2*parameter(sat2)^2 + S^2*( parameter(sat1)^2* ...
                 (1+OrbitData.e(sat2)*cos(f(sat2)))^2 + parameter(sat2)^2*(1+OrbitData.e(sat1)*cos(f(sat1)))^2 ) - 2*S^2*parameter(sat1)*parameter(sat2)* ...
                 ( D1*cos(f(sat2))* ( cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1)) ) + D2*sin(f(sat2))* ( cos_psi*cos(f(sat1))+sin_psi*sin(f(sat1)) ) ) * ...
                 (1+OrbitData.e(sat1)*cos(f(sat1))) * (1+OrbitData.e(sat2)*cos(f(sat2)));
-            % Rangle = parameter(1)^2*parameter(2)^2*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))^2-parameter(1)^2*parameter(2)^2+S^2*(parameter(1)^2*(1+OrbitData.e(2)*cos(f(2)))^2+parameter(2)^2*(1+OrbitData.e(1)*cos(f(1)))^2)-2*S^2*parameter(1)*parameter(2)*(D1*cos(f(2))*cos(gamma-f(1))+D2*sin(f(2))*cos(psi-f(1)))*(1+OrbitData.e(1)*cos(f(1)))*(1+OrbitData.e(2)*cos(f(2)));
+            % Rangle = parameter(sat1)^2*parameter(sat2)^2*(D1*cos(f(sat2))*cos(gamma-f(sat1))+D2*sin(f(sat2))*cos(psi-f(sat1)))^2-parameter(sat1)^2*parameter(sat2)^2+S^2*(parameter(sat1)^2*(1+OrbitData.e(sat2)*cos(f(sat2)))^2+parameter(sat2)^2*(1+OrbitData.e(sat1)*cos(f(sat1)))^2)-2*S^2*parameter(sat1)*parameter(sat2)*(D1*cos(f(sat2))*cos(gamma-f(sat1))+D2*sin(f(sat2))*cos(psi-f(sat1)))*(1+OrbitData.e(sat1)*cos(f(sat1)))*(1+OrbitData.e(sat2)*cos(f(sat2)));
             Rv = sqrt((r(sat1)^2 * r(sat2)^2 - r1dotr2complex^2)/(r(sat1)^2 + r(sat2)^2 - 2*r1dotr2complex)) - body_radius;
-            % Rv_Tot = (r(1)^2*r(2)^2-r1dotr2complex^2)/(r(1)^2 + r(2)^2-2*r1dotr2complex)
-            % Rv_Numerador = r(1)^2 * r(2)^2 - r1dotr2complex^2
-            % Rv_Denominador = r(1)^2 + r(2)^2 - 2*r1dotr2complex
+            % Rv_fraction = (r(sat1)^2*r(sat2)^2-r1dotr2complex^2)/(r(sat1)^2 + r(sat2)^2-2*r1dotr2complex)
+            % Rv_numerator = r(sat1)^2 * r(sat2)^2 - r1dotr2complex^2
+            % Rv_denominator = r(sat1)^2 + r(sat2)^2 - 2*r1dotr2complex
 
             % Step 9: Print Results for the given epoch time 
             pair_result = 'The result for %s%s and %s%s at %s is %d ';
