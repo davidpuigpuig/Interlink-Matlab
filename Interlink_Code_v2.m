@@ -412,7 +412,7 @@ disp('Starting InterLink...')
 
 if indx == 1
     % Simulation Parameters
-    start_time = '22-May-2008 12:28:30';
+    start_time = '22-May-2008 12:00:00';
     %start_time = datetime('now', 'TimeZone', 'UTC');
     
     start_time_unix = posixtime(datetime(start_time));
@@ -420,7 +420,7 @@ if indx == 1
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     
-    end_time = '22-May-2008 13:00:00';
+    end_time = '23-May-2008 00:00:00';
     %end_time = datetime('now', 'TimeZone', 'UTC') + days(1);
     
     end_time_unix = posixtime(datetime(end_time));
@@ -428,7 +428,7 @@ if indx == 1
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
     
-    time_divisions = 1000; %4320 is every 10 seconds for a 12h simulation
+    time_divisions = 500; %4320 is every 10 seconds for a 12h simulation
      
 else
     prompt = {'Simulation start:', 'Simulation end:', 'Time divisons (steps):'};
@@ -608,7 +608,8 @@ for sat1=1:num_satellites-1
         step_count=1;
 
         for t=t:increment:t_end % Simulation time and time discretization
-            
+
+            % Time since the simulation started
             tsince = (t - start_time_unix)/60; % from [s] to [min] for sgp4 function
             
             i = sat1;
@@ -858,7 +859,6 @@ fclose(fid_log); % Closing log file
 
 %% Plot the orbit
 
-% Static plot
 % Plot the Earth
 % If you want a color Earth, use 'neomap', 'BlueMarble'
 % If you want a black and white Earth, use 'neomap', 'BlueMarble_bw'
@@ -891,6 +891,7 @@ end
 colors = lines(num_satellites);
 
 if indx == 2
+    % Static plot
     h1 = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 1);
     for i=1:num_satellites
         plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
