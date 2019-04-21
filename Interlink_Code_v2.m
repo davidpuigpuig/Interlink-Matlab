@@ -420,7 +420,7 @@ if indx == 1
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     
-    end_time = '23-May-2008 00:00:00';
+    end_time = '22-May-2008 12:10:00';
     %end_time = datetime('now', 'TimeZone', 'UTC') + days(1);
     
     end_time_unix = posixtime(datetime(end_time));
@@ -428,7 +428,7 @@ if indx == 1
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
     
-    time_divisions = 500; %4320 is every 10 seconds for a 12h simulation
+    time_divisions = 10; %4320 is every 10 seconds for a 12h simulation
      
 else
     prompt = {'Simulation start:', 'Simulation end:', 'Time divisons (steps):'};
@@ -822,11 +822,11 @@ toc; % Runtime end
 
 %% CSV output file module
 
-if isfile(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'))
+if isfile(fullfile([pwd, '\Data Output Files'],'InterlinkData.csv'))
 else
     disp('Creating CSV file...') % Command window print
     fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Creating CSV file...'); % Log print
-    fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'w');
+    fid_csv = fopen(fullfile([pwd, '\Data Output Files'],'InterlinkData.csv'), 'w');
     if fid_csv == -1
         error('Cannot open file');
     end
@@ -837,7 +837,7 @@ end
 
 disp('Inserting data to CSV file...') % Command window print
 fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Inserting data to CSV file...'); % Log print
-fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'a');
+fid_csv = fopen(fullfile([pwd, '\Data Output Files'],'InterlinkData.csv'), 'a');
 if fid_csv>0
     num_pairs = 0;
     for sat1=1:num_satellites-1
@@ -880,8 +880,8 @@ for t=1:step_count-1
     tSim_strings{t} = datestr(datetime(tSim(t),'ConvertFrom','posixtime'));
 end
 
-plot_list = {'Static Plot', 'Live Plots (See color legend in 1 vs 1 plot to identify satellites. It may take a lot of time)'};
-[indx,tf] = listdlg('ListString',plot_list,'Name','3D Plot','PromptString','Select a plot mode:','SelectionMode','single','ListSize',[600,300],'OKString','Plot','CancelString','Quit');
+plot_list = {'Static Plot', 'Live Plots. See color legend in 1 vs 1 plot to identify satellites. It may take a lot of time. MP4 Animation will be created in Data Output Files (Warning: do not move the figure windows while recording).'};
+[indx,tf] = listdlg('ListString',plot_list,'Name','3D Plot','PromptString','Select a plot mode:','SelectionMode','single','ListSize',[1000,300],'OKString','Plot','CancelString','Quit');
 
 if tf == 0
     disp('User selected Quit');
@@ -900,9 +900,44 @@ if indx == 2
               '.', 'color', colors(i,:), 'MarkerSize', 10, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Starting Point'))
     end
     lgd2 = legend('AutoUpdate', 'off');
-
+    
     % Live 3D plot
+    disp('Do not maxmize Live Plot window (animation being recorded)') % Command window print
+    
+    fid_log = fopen(fullfile([pwd, '/logs'], full_name_log), 'a'); % Setting log file to append mode
+
+    if fid_log == -1
+      error('Cannot open log file.');
+    end
+
+    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Do not maxmize Live Plot window (animation being recorded)');
+    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'The video''s width and height has been padded to be a multiple of two as required by the H.264 codec');
+    fclose(fid_log); % Closing log file
+    
     num_pairs = 0;
+    num_frames = 0;
+    
+    % Counting number of frames for preallocation
+    for sat1=1:num_satellites-1
+        for sat2=sat1+1:num_satellites
+            num_pairs = num_pairs + 1;
+            for t=1:step_count-1
+                    for x=1:2
+                        num_frames = num_frames + 1;
+                    end
+            end
+        end
+    end
+    
+    Frames = moviein(num_frames);
+    num_pairs = 0;
+    % Create the video writer with 1 fps
+    writerObj = VideoWriter(fullfile([pwd, '\Data Output Files'],sprintf('LivePlot-%s.mp4',sprintf('%s-%s',date_log,name_log{1}))), 'MPEG-4');
+    writerObj.FrameRate = 10;
+    % Set the seconds per image
+    % Open the video writer
+    open(writerObj);
+    
     h2 = plotearth('neomap', 'BlueMarble_bw', 'SampleStep', 1);
     for sat1=1:num_satellites-1
         
@@ -931,6 +966,8 @@ if indx == 2
                         end
                         addpoints(curve, RSave(1:t,1,i) / body_radius, RSave(1:t,2,i) / body_radius, RSave(1:t,3,i) / body_radius);
                         drawnow;
+                        F = getframe(gcf);
+                        writeVideo(writerObj, F);
                         pause(0.01)
                         i = sat2;
                     end
@@ -944,6 +981,9 @@ if indx == 2
         end
 
     end
+    
+    % Close the writer object
+    close(writerObj);
     
 else
     % Static plot

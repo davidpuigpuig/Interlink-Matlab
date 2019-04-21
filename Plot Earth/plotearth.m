@@ -287,7 +287,7 @@ try % sometime memory problem occurs
         fig = figure();
         set(fig, 'Color','k', 'Name', ['Earth: ' maptype]); % black background
         
-        pos = get(0,'screensize'); % full screen
+        pos = get(0,'Screensize'); % full screen
         set(fig, 'Position', pos);
         ax = axes('Parent',fig,'pos',[0 0 1 1]);
     else
