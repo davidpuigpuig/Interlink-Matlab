@@ -249,7 +249,7 @@ elseif indx == 2
             OrbitData.M(j)     = str2double(txt_data{1,7}{index+2})*(pi/180);           % Mean anomaly [deg] to [rad/s]
             n                  = str2double(txt_data{1,8}{index+2});                    % Unperturbed mean motion [rev/day]
             OrbitData.n(j)     = n*2*pi/24/60/60;                                       % Unperturbed mean motion [rad/s]
-            OrbitData.a(j)     = ( mu / OrbitData.n(j)^2 )^(1/3);                                    % Semi-major axis [m]
+            OrbitData.a(j)     = ( mu / OrbitData.n(j)^2 )^(1/3);                       % Semi-major axis [m]
             OrbitData.e(j)     = str2double(txt_data{1,5}{index+2})*1e-7;               % Eccentricity [unitless]
 
             % Compute the UTC date / time
@@ -613,11 +613,9 @@ for sat1=1:num_satellites-1
             i = sat1;
             for x=1:2
                 
-                if step_count > 1
-                    [pos, vel, OrbitDataProp] = sgp4(tsince, OrbitData, i);
-                    %OrbitDataProp.a(i) = ( mu / OrbitDataProp.n(i)^2 )^(1/3);
-                    OrbitDataProp.q(i) = OrbitDataProp.a(i)*(1-OrbitDataProp.e(i));
-                end
+                [pos, vel, OrbitDataProp] = sgp4(tsince, OrbitData, i);
+                OrbitDataProp.a(i) = ( mu / OrbitDataProp.n(i)^2 )^(1/3);
+                OrbitDataProp.q(i) = OrbitDataProp.a(i)*(1-OrbitDataProp.e(i));
                 
                 % Step 1 - Finding unperturbed mean motion
                 if OrbitDataProp.e(i) > 1
@@ -635,7 +633,7 @@ for sat1=1:num_satellites-1
 
                 % Step 2 - Solving Mean Anomaly
                 % Mean anomaly method 1
-                M(i) = OrbitDataProp.M(i);
+                M(i) = n(i)*(t-OrbitData.T(i));
                 % Mean anomaly method 2
                 % M(i) = OrbitData.M(i) + n(i)*(t-start_time_unix);
 

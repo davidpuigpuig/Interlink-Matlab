@@ -201,10 +201,9 @@ end
 OrbitDataProp.M(i) = xmdf;
 OrbitDataProp.omega(i) = omgadf;
 OrbitDataProp.RAAN(i) = xnoddf;
-OrbitDataProp.a(i) = a*1000;
 OrbitDataProp.e(i) = e;
 OrbitDataProp.i(i) = xinck;
-OrbitDataProp.n(i) = xnodp;
+OrbitDataProp.n(i) = xnodp/60; % we go from [rad/min] to [rad/s], again
 
 [pos, vel] = Convert_Sat_State(pos, vel);
 
