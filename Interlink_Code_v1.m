@@ -811,7 +811,8 @@ toc; % Runtime end
 
 if isfile(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'))
 else
-    disp('Creating CSV file...')
+    disp('Creating CSV file...') % Command window print
+    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Creating CSV file...'); % Log print
     fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'w');
     if fid_csv == -1
         error('Cannot open file');

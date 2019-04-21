@@ -563,7 +563,8 @@ for sat1=1:num_satellites-1
                 csv_data{i,11,j,num_pairs} = strcat(OrbitData.ID{j},OrbitData.designation{j});
                 csv_data{i,12,j,num_pairs} = OrbitData.PRN{j};
                 csv_data{i,20,j,num_pairs} = OrbitData.date{j};
-                csv_data{i,21,j,num_pairs} = OrbitData.BC(j);
+                csv_data{i,21,j,num_pairs} = OrbitData.Bstar(j);
+                csv_data{i,22,j,num_pairs} = OrbitData.BC(j);
                 j = sat2;
             end
         end
@@ -721,11 +722,11 @@ for sat1=1:num_satellites-1
                 csv_data{step_count,17,i,num_pairs} = OrbitDataProp.n(i);
                 csv_data{step_count,18,i,num_pairs} = OrbitDataProp.a(i);
                 csv_data{step_count,19,i,num_pairs} = OrbitDataProp.e(i);
-                csv_data{step_count,22,i,num_pairs} = f(i);
-                csv_data{step_count,23,i,num_pairs} = xi(i);
-                csv_data{step_count,24,i,num_pairs} = eta(i);
-                csv_data{step_count,25,i,num_pairs} = parameter(i);
-                csv_data{step_count,26,i,num_pairs} = r(i);
+                csv_data{step_count,23,i,num_pairs} = f(i);
+                csv_data{step_count,24,i,num_pairs} = xi(i);
+                csv_data{step_count,25,i,num_pairs} = eta(i);
+                csv_data{step_count,26,i,num_pairs} = parameter(i);
+                csv_data{step_count,27,i,num_pairs} = r(i);
                 
                 i = sat2;
             end
@@ -822,14 +823,15 @@ toc; % Runtime end
 
 if isfile(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'))
 else
-    disp('Creating CSV file...')
+    disp('Creating CSV file...') % Command window print
+    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Creating CSV file...'); % Log print
     fid_csv = fopen(fullfile([pwd, '\Data Output File'],'InterlinkData.csv'), 'w');
     if fid_csv == -1
         error('Cannot open file');
     end
     headers = {'Simulation ID', 'Analysis', 'Simulation Date Time', 'Simualtion Unix Time', 'Satellite 1', 'Satellite 2', 'Satellites Number', 'Satellites Names', 'R_Visibility', 'R_Margin', 'Satellite ID', 'PRN', ...
-                'Inclination', 'RAAN', 'Argument periapsis', 'Mean Anomaly', 'Mean Motion', 'Semimajor axis', 'Eccentricity', 'TLE Date', 'Ballistic Coefficient', 'True Anomaly', 'Xi', 'Eta', 'Parameter', 'R_vector'};
-    fprintf(fid_csv,'%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n', headers{1:26});
+                'Inclination', 'RAAN', 'Argument periapsis', 'Mean Anomaly', 'Mean Motion', 'Semimajor axis', 'Eccentricity', 'TLE Date', 'Bstar', 'Ballistic Coefficient', 'True Anomaly', 'Xi', 'Eta', 'Parameter', 'R_vector'};
+    fprintf(fid_csv,'%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n', headers{1:27});
 end
 
 disp('Inserting data to CSV file...') % Command window print
@@ -843,7 +845,7 @@ if fid_csv>0
             for i=1:num_steps
                 j = sat1;
                 for x=1:2
-                    fprintf(fid_csv,'%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n',csv_data{i,:,j,num_pairs});
+                    fprintf(fid_csv,'%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s;%s\n',csv_data{i,:,j,num_pairs});
                     j = sat2;
                 end
             end
