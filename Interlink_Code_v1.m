@@ -189,8 +189,8 @@ if indx == 1
                 error('End program')
             end
 
-            Bstar = base*10^expo;
-            OrbitData.BC(j) = 1/12.741621/Bstar;                            % Ballistic coefficient [kg/m^2]
+            OrbitData.Bstar(j) = base*1e-5*10^expo;
+            OrbitData.BC(j) = 1/12.741621/OrbitData.Bstar(j);
 
         end
     end
@@ -279,8 +279,8 @@ elseif indx == 2
                 return
             end
 
-            Bstar = base*10^expo;
-            OrbitData.BC(j) = 1/12.741621/Bstar; % [kg/m^2]
+            OrbitData.Bstar(j) = base*1e-5*10^expo;
+            OrbitData.BC(j) = 1/12.741621/OrbitData.Bstar(j); 
             
         end
     end
@@ -390,8 +390,8 @@ elseif indx == 3
             error('End program')
         end
         
-        Bstar = base*10^expo;
-        OrbitData.BC(j) = 1/12.741621/Bstar; % [kg/m^2]
+        OrbitData.Bstar(j) = base*1e-5*10^expo;
+        OrbitData.BC(j) = 1/12.741621/OrbitData.Bstar(j); 
         
     end
     
@@ -590,6 +590,10 @@ RSave = NaN(length(tSim), 3, num_satellites);
 
 %% Algorithm
 
+addpath([pwd, '\SGP4']);
+
+OrbitDataProp = OrbitData;
+
 tic; % Runtime start
 
 num_pairs = 0;
@@ -603,81 +607,91 @@ for sat1=1:num_satellites-1
         step_count=1;
 
         for t=t:increment:t_end % Simulation time and time discretization
+            
+            tsince = (t - start_time_unix)/60; % from [s] to [min] for sgp4 function
+            
             i = sat1;
             for x=1:2
-
+                
+                if step_count > 1
+                    [pos, vel, OrbitDataProp] = sgp4(tsince, OrbitData, i);
+                    %OrbitDataProp.a(i) = ( mu / OrbitDataProp.n(i)^2 )^(1/3);
+                    OrbitDataProp.q(i) = OrbitDataProp.a(i)*(1-OrbitDataProp.e(i));
+                    % Confused with a, n and M
+                end
+                
                 % Step 1 - Finding unperturbed mean motion
-                if OrbitData.e(i) > 1
-                    n(i) = k*sqrt(mu/-OrbitData.a(i)^3);
-                elseif OrbitData.e(i) == 1
-                    n(i) = k*sqrt(mu/(2*OrbitData.q(i)^3));
-                elseif OrbitData.e(i) < 1 && OrbitData.e(i) >= 0
+                if OrbitDataProp.e(i) > 1
+                    n(i) = k*sqrt(mu/-OrbitDataProp.a(i)^3);
+                elseif OrbitDataProp.e(i) == 1
+                    n(i) = k*sqrt(mu/(2*OrbitDataProp.q(i)^3));
+                elseif OrbitDataProp.e(i) < 1 && OrbitDataProp.e(i) >= 0
                     % Mean motion method 1
-                    % n(i) = k*sqrt(mu/OrbitData.a(i)^3);
+                    % n(i) = k*sqrt(mu/OrbitDataProp.a(i)^3);
                     % Mean motion method 2
-                    n(i) = OrbitData.n(i);
+                    n(i) = OrbitDataProp.n(i);
                 else
                     error('Eccentricity cannot be a negative value')
                 end
 
                 % Step 2 - Solving Mean Anomaly
                 % Mean anomaly method 1
-                M(i) = n(i)*(t-OrbitData.T(i));
+                M(i) = OrbitDataProp.M(i);
                 % Mean anomaly method 2
                 % M(i) = OrbitData.M(i) + n(i)*(t-start_time_unix);
 
                 % Step 3 - Finding true anomaly 
-                if OrbitData.e(i) > 1
+                if OrbitDataProp.e(i) > 1
                     % Iteration method 1
                     Fn(i) = 6*M(i);
                     error = 1;
                     while error > 1e-8
-                        Fn1(i) = Fn(i) + (M(i)-OrbitData.e(i)*sinh(Fn(i))+Fn(i))/(OrbitData.e(i)*cosh(Fn(i))-1);
+                        Fn1(i) = Fn(i) + (M(i)-OrbitDataProp.e(i)*sinh(Fn(i))+Fn(i))/(OrbitDataProp.e(i)*cosh(Fn(i))-1);
                         error = abs(Fn1(i)-Fn(i));
                         Fn(i) = Fn1(i);
                     end
 
-                    f(i) = atan((-sinh(Fn(i))*sqrt(OrbitData.e(i)^2-1))/(cosh(Fn(i))-OrbitData.e(i)));
+                    f(i) = atan((-sinh(Fn(i))*sqrt(OrbitDataProp.e(i)^2-1))/(cosh(Fn(i))-OrbitDataProp.e(i)));
 
-                elseif OrbitData.e(i) == 1
+                elseif OrbitDataProp.e(i) == 1
                     A(i) = (3/2)*M(i);
                     B(i) = (sqrt(A(i)^2+1)+A(i))^(1/3);
                     C(i) = B(i)-1/B(i);
                     f(i) = 2*atan(C(i));
 
-                elseif OrbitData.e(i) < 1 && OrbitData.e(i) >= 0
+                elseif OrbitDataProp.e(i) < 1 && OrbitDataProp.e(i) >= 0
                     % Iteration method 2
                     if M(i) < pi 
-                        Einicial = M(i) + OrbitData.e(i)/2;
+                        Einicial = M(i) + OrbitDataProp.e(i)/2;
                     else 
-                        Einicial = M(i) - OrbitData.e(i)/2;
+                        Einicial = M(i) - OrbitDataProp.e(i)/2;
                     end
                     E = Einicial;
                     TOL = 1;
                     while TOL > 1e-8
-                        fdee = E - OrbitData.e(i)*sin(E)-M(i);
-                        fprimadee = 1-OrbitData.e(i)*cos(E);
+                        fdee = E - OrbitDataProp.e(i)*sin(E)-M(i);
+                        fprimadee = 1-OrbitDataProp.e(i)*cos(E);
                         TOL = abs(fdee/fprimadee);
                         En(i)=E;
                         E=E-fdee/fprimadee;
                     end
 
-                    f(i) = atan((sin(En(i))*sqrt(1-OrbitData.e(i)^2))/(cos(En(i))-OrbitData.e(i)));
+                    f(i) = atan((sin(En(i))*sqrt(1-OrbitDataProp.e(i)^2))/(cos(En(i))-OrbitDataProp.e(i)));
 
                 else
                     error('Eccentricity cannot be a negative value')
                 end
 
                 % Step 4 - Finding primary body center to satellite distance
-                r(i) = (1+OrbitData.e(i))*OrbitData.q(i)/(1+OrbitData.e(i)*cos(f(i)));
+                r(i) = (1+OrbitDataProp.e(i))*OrbitDataProp.q(i)/(1+OrbitDataProp.e(i)*cos(f(i)));
 
                 % Step 5 - Finding standard orientation vectors
-                Px(i) = cos(OrbitData.omega(i))*cos(OrbitData.RAAN(i))-sin(OrbitData.omega(i))*sin(OrbitData.RAAN(i))*cos(OrbitData.i(i));
-                Py(i) = cos(OrbitData.omega(i))*sin(OrbitData.RAAN(i))+sin(OrbitData.omega(i))*cos(OrbitData.RAAN(i))*cos(OrbitData.i(i));
-                Pz(i) = sin(OrbitData.omega(i))*sin(OrbitData.i(i));
-                Qx(i) = -sin(OrbitData.omega(i))*cos(OrbitData.RAAN(i))+cos(OrbitData.omega(i))*sin(OrbitData.RAAN(i))*cos(OrbitData.i(i));
-                Qy(i) = -sin(OrbitData.omega(i))*sin(OrbitData.RAAN(i))+cos(OrbitData.omega(i))*cos(OrbitData.RAAN(i))*cos(OrbitData.i(i));
-                Qz(i) = cos(OrbitData.omega(i))*sin(OrbitData.i(i));
+                Px(i) = cos(OrbitDataProp.omega(i))*cos(OrbitDataProp.RAAN(i))-sin(OrbitDataProp.omega(i))*sin(OrbitDataProp.RAAN(i))*cos(OrbitDataProp.i(i));
+                Py(i) = cos(OrbitDataProp.omega(i))*sin(OrbitDataProp.RAAN(i))+sin(OrbitDataProp.omega(i))*cos(OrbitDataProp.RAAN(i))*cos(OrbitDataProp.i(i));
+                Pz(i) = sin(OrbitDataProp.omega(i))*sin(OrbitDataProp.i(i));
+                Qx(i) = -sin(OrbitDataProp.omega(i))*cos(OrbitDataProp.RAAN(i))+cos(OrbitDataProp.omega(i))*sin(OrbitDataProp.RAAN(i))*cos(OrbitDataProp.i(i));
+                Qy(i) = -sin(OrbitDataProp.omega(i))*sin(OrbitDataProp.RAAN(i))+cos(OrbitDataProp.omega(i))*cos(OrbitDataProp.RAAN(i))*cos(OrbitDataProp.i(i));
+                Qz(i) = cos(OrbitDataProp.omega(i))*sin(OrbitDataProp.i(i));
 
                 % Step 6 - Finding components of the primary body center to satellite vector in the orbital plane
                 xi(i) = r(i)*cos(f(i));
@@ -690,26 +704,26 @@ for sat1=1:num_satellites-1
                 end
 
                 % Step 8 - Finding Parameter or Semi-parameter
-                parameter(i) = OrbitData.a(i)*(1-OrbitData.e(i)^2);
+                parameter(i) = OrbitDataProp.a(i)*(1-OrbitDataProp.e(i)^2);
 
                 % Step 9 - Transformation for 3D visuals
                 % Adjust RAAN such that we are consisten with Earth's current
                 % orientation. This is a conversion to Longitude of the
                 % Ascending Node (LAN). 
-                RAAN2 = OrbitData.RAAN(i) - GMST;
+                RAAN2 = OrbitDataProp.RAAN(i) - GMST;
 
                 % Convert to ECI and save the data.
-                [X,~] = COE2RV(OrbitData.a(i), OrbitData.e(i), OrbitData.i(i), RAAN2, OrbitData.omega(i), M(i));
+                [X,~] = COE2RV(OrbitDataProp.a(i), OrbitDataProp.e(i), OrbitDataProp.i(i), RAAN2, OrbitDataProp.omega(i), M(i));
                 RSave(step_count,:,i) = X';
                 
                 % CSV insertion
-                csv_data{step_count,13,i,num_pairs} = OrbitData.i(i);
-                csv_data{step_count,14,i,num_pairs} = OrbitData.RAAN(i);
-                csv_data{step_count,15,i,num_pairs} = OrbitData.omega(i);
+                csv_data{step_count,13,i,num_pairs} = OrbitDataProp.i(i);
+                csv_data{step_count,14,i,num_pairs} = OrbitDataProp.RAAN(i);
+                csv_data{step_count,15,i,num_pairs} = OrbitDataProp.omega(i);
                 csv_data{step_count,16,i,num_pairs} = M(i);
-                csv_data{step_count,17,i,num_pairs} = OrbitData.n(i);
-                csv_data{step_count,18,i,num_pairs} = OrbitData.a(i);
-                csv_data{step_count,19,i,num_pairs} = OrbitData.e(i);
+                csv_data{step_count,17,i,num_pairs} = OrbitDataProp.n(i);
+                csv_data{step_count,18,i,num_pairs} = OrbitDataProp.a(i);
+                csv_data{step_count,19,i,num_pairs} = OrbitDataProp.e(i);
                 csv_data{step_count,22,i,num_pairs} = f(i);
                 csv_data{step_count,23,i,num_pairs} = xi(i);
                 csv_data{step_count,24,i,num_pairs} = eta(i);
@@ -745,17 +759,17 @@ for sat1=1:num_satellites-1
             D2 = sqrt(A3^2+A4^2);
 
             % r1dotr2calc = r_vector(sat1,1)*r_vector(sat2,1) + r_vector(sat1,2)*r_vector(sat2,2) + r_vector(sat1,3)*r_vector(sat2,3) 
-            % r1dotr2simple = (parameter(sat1)*parameter(sat2)/((1+OrbitData.e(sat1)*cos(f(sat1)))*(1+OrbitData.e(sat2)*cos(f(sat2)))))*(A1*cos(f(sat1))*cos(f(sat2))+A3*cos(f(sat1))*sin(f(sat2))+A2*sin(f(sat1))*cos(f(sat2))+A4*sin(f(sat1))*sin(f(sat2)));
-            r1dotr2complex = (parameter(sat1)*parameter(sat2)/((1+OrbitData.e(sat1)*cos(f(sat1)))*(1+OrbitData.e(sat2)*cos(f(sat2)))))* ...
+            % r1dotr2simple = (parameter(sat1)*parameter(sat2)/((1+OrbitDataProp.e(sat1)*cos(f(sat1)))*(1+OrbitDataProp.e(sat2)*cos(f(sat2)))))*(A1*cos(f(sat1))*cos(f(sat2))+A3*cos(f(sat1))*sin(f(sat2))+A2*sin(f(sat1))*cos(f(sat2))+A4*sin(f(sat1))*sin(f(sat2)));
+            r1dotr2complex = (parameter(sat1)*parameter(sat2)/((1+OrbitDataProp.e(sat1)*cos(f(sat1)))*(1+OrbitDataProp.e(sat2)*cos(f(sat2)))))* ...
                              (D1*cos(f(sat2))*(cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1)))+D2*sin(f(sat2))*(cos_psi*cos(f(sat1))+sin_psi*sin(f(sat1))));
             % Rsimple1 = r1dotr2simple^2 - r(sat2)^2*r(sat1)^2 + (r(sat2)^2 + r(sat1)^2)*S^2 - 2*S^2*(r1dotr2simple);
             % Rsimple2 = r1dotr2complex^2 - r(sat2)^2*r(sat1)^2 + (r(sat2)^2 + r(sat1)^2)*S^2 - 2*S^2*(r1dotr2complex);
             Rcomplex(step_count, num_pairs) = parameter(sat1)^2 * parameter(sat2)^2 * ( D1*cos(f(sat2))*(cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1))) + ...
                 D2*sin(f(sat2))*(cos_psi*cos(f(sat1))+sin_psi*sin(f(sat1))) )^2 - parameter(sat1)^2*parameter(sat2)^2 + S^2*( parameter(sat1)^2* ...
-                (1+OrbitData.e(sat2)*cos(f(sat2)))^2 + parameter(sat2)^2*(1+OrbitData.e(sat1)*cos(f(sat1)))^2 ) - 2*S^2*parameter(sat1)*parameter(sat2)* ...
+                (1+OrbitDataProp.e(sat2)*cos(f(sat2)))^2 + parameter(sat2)^2*(1+OrbitDataProp.e(sat1)*cos(f(sat1)))^2 ) - 2*S^2*parameter(sat1)*parameter(sat2)* ...
                 ( D1*cos(f(sat2))* ( cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1)) ) + D2*sin(f(sat2))* ( cos_psi*cos(f(sat1))+sin_psi*sin(f(sat1)) ) ) * ...
-                (1+OrbitData.e(sat1)*cos(f(sat1))) * (1+OrbitData.e(sat2)*cos(f(sat2)));
-            % Rangle = parameter(sat1)^2*parameter(sat2)^2*(D1*cos(f(sat2))*cos(gamma-f(sat1))+D2*sin(f(sat2))*cos(psi-f(sat1)))^2-parameter(sat1)^2*parameter(sat2)^2+S^2*(parameter(sat1)^2*(1+OrbitData.e(sat2)*cos(f(sat2)))^2+parameter(sat2)^2*(1+OrbitData.e(sat1)*cos(f(sat1)))^2)-2*S^2*parameter(sat1)*parameter(sat2)*(D1*cos(f(sat2))*cos(gamma-f(sat1))+D2*sin(f(sat2))*cos(psi-f(sat1)))*(1+OrbitData.e(sat1)*cos(f(sat1)))*(1+OrbitData.e(sat2)*cos(f(sat2)));
+                (1+OrbitDataProp.e(sat1)*cos(f(sat1))) * (1+OrbitDataProp.e(sat2)*cos(f(sat2)));
+            % Rangle = parameter(sat1)^2*parameter(sat2)^2*(D1*cos(f(sat2))*cos(gamma-f(sat1))+D2*sin(f(sat2))*cos(psi-f(sat1)))^2-parameter(sat1)^2*parameter(sat2)^2+S^2*(parameter(sat1)^2*(1+OrbitDataProp.e(sat2)*cos(f(sat2)))^2+parameter(sat2)^2*(1+OrbitDataProp.e(sat1)*cos(f(sat1)))^2)-2*S^2*parameter(sat1)*parameter(sat2)*(D1*cos(f(sat2))*cos(gamma-f(sat1))+D2*sin(f(sat2))*cos(psi-f(sat1)))*(1+OrbitDataProp.e(sat1)*cos(f(sat1)))*(1+OrbitDataProp.e(sat2)*cos(f(sat2)));
             Rv = sqrt((r(sat1)^2 * r(sat2)^2 - r1dotr2complex^2)/(r(sat1)^2 + r(sat2)^2 - 2*r1dotr2complex)) - body_radius;
             % Rv_fraction = (r(sat1)^2*r(sat2)^2-r1dotr2complex^2)/(r(sat1)^2 + r(sat2)^2-2*r1dotr2complex)
             % Rv_numerator = r(sat1)^2 * r(sat2)^2 - r1dotr2complex^2
