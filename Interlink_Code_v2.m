@@ -902,7 +902,7 @@ if indx == 2
     lgd2 = legend('AutoUpdate', 'off');
     
     % Live 3D plot
-    disp('Do not maxmize Live Plot window (animation being recorded)') % Command window print
+    disp('Do not maximize Live Plot window (animation being recorded)') % Command window print
     
     fid_log = fopen(fullfile([pwd, '/logs'], full_name_log), 'a'); % Setting log file to append mode
 
@@ -910,7 +910,7 @@ if indx == 2
       error('Cannot open log file.');
     end
 
-    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Do not maxmize Live Plot window (animation being recorded)');
+    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Do not maximize Live Plot window (animation being recorded)');
     fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'The video''s width and height has been padded to be a multiple of two as required by the H.264 codec');
     fclose(fid_log); % Closing log file
     
@@ -931,7 +931,7 @@ if indx == 2
     
     Frames = moviein(num_frames);
     num_pairs = 0;
-    % Create the video writer with 1 fps
+    % Create the video writer with the desired fps
     writerObj = VideoWriter(fullfile([pwd, '\Data Output Files'],sprintf('LivePlot-%s.mp4',sprintf('%s-%s',date_log,name_log{1}))), 'MPEG-4');
     writerObj.FrameRate = 10;
     % Set the seconds per image
