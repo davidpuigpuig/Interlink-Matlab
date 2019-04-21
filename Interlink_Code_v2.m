@@ -420,7 +420,7 @@ if indx == 1
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     
-    end_time = '22-May-2008 12:10:00';
+    end_time = '23-May-2008 00:00:00';
     %end_time = datetime('now', 'TimeZone', 'UTC') + days(1);
     
     end_time_unix = posixtime(datetime(end_time));
@@ -428,7 +428,7 @@ if indx == 1
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
     
-    time_divisions = 10; %4320 is every 10 seconds for a 12h simulation
+    time_divisions = 500; %4320 is every 10 seconds for a 12h simulation
      
 else
     prompt = {'Simulation start:', 'Simulation end:', 'Time divisons (steps):'};
@@ -498,6 +498,7 @@ for i=1:num_satellites
     Rangle = 0;                                                             % Visibility parameter [m]
     Rv = 0;                                                                 % Distance from earth to satellite-satellite line
     csv_data = cell(num_steps, 26, 2, num_pairs);                           % Array of matrix to store relevant data
+    WindowsData = struct('start', zeros(num_satellites, num_satellites, 100), 'end', zeros(num_satellites, num_satellites, 100), 'time', zeros(num_satellites, num_satellites, 100));
 end
 
 %% Log file module
@@ -589,7 +590,7 @@ tSim = linspace(start_time_unix, end_time_unix, num_steps);
 % Allocate space
 RSave = NaN(length(tSim), 3, num_satellites);
 
-%% Algorithm
+%% Visibility Algorithm
 
 addpath([pwd, '\SGP4']);
 
@@ -604,6 +605,8 @@ for sat1=1:num_satellites-1
     for sat2=sat1+1:num_satellites
         
         num_pairs= num_pairs + 1;
+        
+        num_windows = 0;
 
         step_count=1;
 
@@ -790,6 +793,21 @@ for sat1=1:num_satellites-1
             else
                 disp(non_visibility); % Command window print
                 fprintf(fid_log, '%s: %s%s\n', datestr(datetime('now', 'TimeZone', 'UTC')), result_to_log, non_visibility); % Appending visibility analysis result to log file
+            end
+            
+            % Pathfinder feed
+            if Rcomplex(step_count,num_pairs) < 0 && (Rcomplex(step_count-1,num_pairs) >= 0 || step_count == 1)
+                num_windows = num_windows + 1;
+                WindowsData.start(sat1,sat2,num_windows) = t;
+                WindowsData.start(sat2,sat1,num_windows) = WindowsData.start(sat1,sat2,num_windows);
+            end
+            if step_count > 1
+                if Rcomplex(step_count,num_pairs) >= 0 && (Rcomplex(step_count-1,num_pairs) < 0 || step_count == num_steps) && num_windows >= 1
+                    WindowsData.end(sat1,sat2,num_windows) = t;
+                    WindowsData.time(sat1,sat2,num_windows) = t-WindowsData.start(sat1,sat2,num_windows);
+                    WindowsData.end(sat2,sat1,num_windows) = WindowsData.end(sat1,sat2,num_windows);
+                    WindowsData.time(sat2,sat1,num_windows) = WindowsData.time(sat1,sat2,num_windows);
+                end
             end
             
             % CSV insertion
@@ -996,6 +1014,40 @@ else
     end
     lgd2 = legend();
 end
+
+%% Pathfinder Algorithm
+
+% Transfer time [s]
+transfer_time = 10;
+
+% Fisrt sender and final receiver
+start_sat = 1;
+end_dat = 5;
+
+for sat1=1:num_satellites-1
+    
+    for sat2=sat1+1:num_satellites
+        num_windows = 1;
+        i=sat1;
+        j=sat2;
+        for x=1:2
+            while (WindowsData.time(i,j,num_windows) < transfer_time || WindowsData.time(i,j,num_windows) == 0) && num_windows <= length(WindowsData.time)
+                num_windows = num_windows + 1;
+            end
+            if WindowsData.time(i,j,num_windows) > transfer_time && WindowsData.time(i,j,num_windows) > 0
+                    WindowsDataFirst.start(i,j) =  WindowsData.start(i,j,num_windows);
+                    WindowsDataFirst.end(i,j) = WindowsData.end(i,j,num_windows);
+                    WindowsDataFirst.time(i,j) =  WindowsData.time(i,j,num_windows);
+            end
+            i=sat2;
+            j=sat1;
+        end
+        
+    end
+    
+end
+
+%% The End
 
 disp('InterLink ended successfully') % Command winodow print
 
