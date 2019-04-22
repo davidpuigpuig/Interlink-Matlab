@@ -497,7 +497,7 @@ for i=1:num_satellites
     Rcomplex = zeros(num_steps, num_pairs);                                 % Visibility parameter [m]
     Rangle = 0;                                                             % Visibility parameter [m]
     Rv = 0;                                                                 % Distance from earth to satellite-satellite line
-    csv_data = cell(num_steps, 26, 2, num_pairs);                           % Array of matrix to store relevant data
+    csv_data = cell(num_steps, 27, 2, num_pairs);                           % Array of matrix to store relevant data
     WindowsData = struct('start', zeros(num_satellites, num_satellites, 1000), 'end', zeros(num_satellites, num_satellites, 1000), 'time', zeros(num_satellites, num_satellites, 1000));
 end
 
