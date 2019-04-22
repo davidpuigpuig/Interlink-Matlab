@@ -907,12 +907,7 @@ for t=1:step_count-1
 end
 
 plot_list = {'Static Plot', 'Live Plots. See color legend in 1 vs 1 plot to identify satellites. It may take a lot of time. MP4 Animation will be created in Data Output Files (Warning: do not move the figure windows while recording).'};
-[indx,tf] = listdlg('ListString',plot_list,'Name','3D Plot','PromptString','Select a plot mode:','SelectionMode','single','ListSize',[1000,300],'OKString','Plot','CancelString','Quit');
-
-if tf == 0
-    disp('User selected Quit');
-    return
-end
+[indx,~] = listdlg('ListString',plot_list,'Name','3D Plot','PromptString','Select a plot mode:','SelectionMode','single','ListSize',[1000,300],'OKString','Plot','CancelString','Quit');
 
 colors = lines(num_satellites);
 
@@ -1028,34 +1023,24 @@ path_tle_list = cell(1,num_satellites);
 
 for i=1:num_satellites
     satellite_string = strcat(OrbitData.ID{i},OrbitData.designation{i});
-    path_tle_list(1,i) = satellite_string;
+    path_tle_list{i} = satellite_string;
 end
 
-[indx,tf] = listdlg('ListString',path_tle_list,'Name','Pathfinder. Satellite first sender','PromptString','Select sender',...
+[indx,~] = listdlg('ListString',path_tle_list,'Name','Pathfinder. Satellite sender','PromptString','Select sender',...
                     'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
-                
-if tf == 0
-    disp('User selected Quit');
-    return
-end
 
 start_sat = indx;
 
-[indx,tf] = listdlg('ListString',path_tle_list,'Name','Pathfinder. Satellite final receiver','PromptString','Select receiver',...
+[indx,~] = listdlg('ListString',path_tle_list,'Name','Pathfinder. Satellite receiver','PromptString','Select receiver',...
                     'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
                
-if tf == 0
-    disp('User selected Quit');
-    return
-end
-
 end_sat = indx;
 
 prompt = {'Transfer duration [s]:'};
 dlgtitle = 'Pathfinder transfer time';
 dims = [1 70];
 pathfinder_answer = inputdlg(prompt,dlgtitle,dims);
-transfer_time = str2double(pathfinder_answer{3});
+transfer_time = str2double(pathfinder_answer{1});
 
 % Windows per pair able to transfer the required data
 for sat1=1:num_satellites-1
