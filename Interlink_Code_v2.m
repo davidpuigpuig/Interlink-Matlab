@@ -1130,6 +1130,9 @@ for x=1:num_satellites
                 if q == end_sat
                     q = q+1;
                 end
+                if q == y
+                    q = q+1;
+                end
                 index_count = index_count + 1;
                 PathSolution3.sat_start(index_count,1) = start_sat;
                 PathSolution3.sat_end(index_count,1) = y;
@@ -1151,7 +1154,7 @@ for x=1:num_satellites
                 PathSolution3.total_time(index_count,2) = PathSolution3.end(index_count,2) - start_time_unix;
 
                 num_windows=1;
-                k = num_windows;
+                m = num_windows;
                 while WindowsDataFirst.start(q,end_sat,num_windows) < WindowsDataFirst.start(y,q,k) && num_windows < length(WindowsDataFirst.start)
                     num_windows = num_windows + 1;
                     m = num_windows;
@@ -1172,9 +1175,37 @@ fprintf(sprintf('One-jump path from Satellite %d to Satellite %d is:\n',start_sa
 disp(PathSolution1);
 
 % Best two jumps path
+
+quick_path2 = start_time_unix;
+for i=1:length(PathSolution2.total_time)
+    if PathSolution2.total_time(i,1) > 0
+        if PathSolution2.total_time(i,2) > 0
+            if PathSolution2.total_time(i,2) < quick_path2
+                quick_path2 = PathSolution2.total_time(i,2);
+                quick_path2_id = i;
+            end
+        end
+    end
+end
+
 fprintf(sprintf('Quickest two-jump path from Satellite %d to Satellite %d is:\n',start_sat,end_sat));
 
 % Best three jumps path
+
+quick_path3 = start_time_unix;
+for i=1:length(PathSolution3.total_time)
+    if PathSolution3.total_time(i,1) > 0
+        if PathSolution3.total_time(i,2) > 0
+            if PathSolution3.total_time(i,3) > 0
+                if PathSolution3.total_time(i,3) < quick_path3
+                    quick_path3 = PathSolution3.total_time(i,3);
+                    quick_path3_id = i;
+                end
+            end
+        end
+    end
+end
+
 fprintf(sprintf('Quickest three-jump path from Satellite %d to Satellite %d is:\n',start_sat,end_sat));
 
 %% The End
