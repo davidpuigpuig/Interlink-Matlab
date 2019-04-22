@@ -1024,13 +1024,14 @@ else
 end
 
 %% Pathfinder Algorithm 
+path_tle_list = cell(1,num_satellites);
 
 for i=1:num_satellites
-    strcat(OrbitData.ID{},OrbitData.designation{});
+    satellite_string = strcat(OrbitData.ID{i},OrbitData.designation{i});
+    path_tle_list(1,i) = satellite_string;
 end
 
-sender_tle_list = {};
-[indx,tf] = listdlg('ListString',sender_tle_list,'Name','Pathfinder. Satellite first sender','PromptString','Select sender',...
+[indx,tf] = listdlg('ListString',path_tle_list,'Name','Pathfinder. Satellite first sender','PromptString','Select sender',...
                     'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
                 
 if tf == 0
@@ -1040,8 +1041,7 @@ end
 
 start_sat = indx;
 
-receiver_tle_list = {};
-[indx,tf] = listdlg('ListString',receiver_tle_list,'Name','Pathfinder. Satellite final receiver','PromptString','Select receiver',...
+[indx,tf] = listdlg('ListString',path_tle_list,'Name','Pathfinder. Satellite final receiver','PromptString','Select receiver',...
                     'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
                
 if tf == 0
