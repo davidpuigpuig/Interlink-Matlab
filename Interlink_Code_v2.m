@@ -802,7 +802,15 @@ for sat1=1:num_satellites-1
                 WindowsData.start(sat2,sat1,num_windows) = WindowsData.start(sat1,sat2,num_windows);
             end
             if step_count > 1
-                if Rcomplex(step_count,num_pairs) >= 0 && (Rcomplex(step_count-1,num_pairs) < 0 || step_count == num_steps) && num_windows >= 1
+                if Rcomplex(step_count,num_pairs) >= 0 && Rcomplex(step_count-1,num_pairs) < 0 && num_windows >= 1
+                    WindowsData.end(sat1,sat2,num_windows) = t;
+                    WindowsData.time(sat1,sat2,num_windows) = t-WindowsData.start(sat1,sat2,num_windows);
+                    WindowsData.end(sat2,sat1,num_windows) = WindowsData.end(sat1,sat2,num_windows);
+                    WindowsData.time(sat2,sat1,num_windows) = WindowsData.time(sat1,sat2,num_windows);
+                end
+            end
+            if step_count > 1
+                if Rcomplex(step_count,num_pairs) < 0 && Rcomplex(step_count-1,num_pairs) < 0 && step_count == num_steps 
                     WindowsData.end(sat1,sat2,num_windows) = t;
                     WindowsData.time(sat1,sat2,num_windows) = t-WindowsData.start(sat1,sat2,num_windows);
                     WindowsData.end(sat2,sat1,num_windows) = WindowsData.end(sat1,sat2,num_windows);
@@ -1033,16 +1041,16 @@ for sat1=1:num_satellites-1
         for x=1:2
             % 10 Windows per pair
             target_time = transfer_time;
+            num_windows = 1;
             for y=1:10
-                num_windows = 1;
-                while (WindowsData.time(i,j,num_windows) < target_time || WindowsData.time(i,j,num_windows) == 0) && num_windows <= length(WindowsData.time)-1
+                while (WindowsData.time(i,j,num_windows) < target_time || WindowsData.time(i,j,num_windows) == 0) && num_windows < length(WindowsData.time)
                     num_windows = num_windows + 1;
                 end
                 if WindowsData.time(i,j,num_windows) > transfer_time && WindowsData.time(i,j,num_windows) > 0
                         WindowsDataFirst.start(i,j,y) =  WindowsData.start(i,j,num_windows);
                         WindowsDataFirst.end(i,j,y) = WindowsData.end(i,j,num_windows);
                         WindowsDataFirst.time(i,j,y) =  WindowsData.time(i,j,num_windows);
-                        target_time = WindowsData.time(i,j,num_windows);
+                        num_windows = num_windows + 1;
                 end
             end
             
@@ -1086,7 +1094,7 @@ for x=1:num_satellites
         PathSolution2.total_time(x,1) = PathSolution2.end(1,1) - start_time_unix;
 
         num_windows=1;
-        while WindowsDataFirst.start(y,end_sat,num_windows) < WindowsDataFirst.start(start_sat,y,1) && num_windows <= length(WindowsDataFirst.start)-1
+        while WindowsDataFirst.start(y,end_sat,num_windows) < WindowsDataFirst.start(start_sat,y,1) && num_windows < length(WindowsDataFirst.start)
             num_windows = num_windows + 1;
             k = num_windows;
         end
@@ -1095,7 +1103,7 @@ for x=1:num_satellites
         PathSolution2.sat_end(x,2) = end_sat;
         PathSolution2.start(x,2) = WindowsDataFirst.start(y,end_sat,k);
         PathSolution2.end(x,2) = WindowsDataFirst.start(y,end_sat,k) + transfer_time;
-        PathSolution2.total_time(x,2) = PathSolution2.end(1,2) - start_time_unix;
+        PathSolution2.total_time(x,2) = PathSolution2.end(x,2) - start_time_unix;
     end
 end
 
@@ -1126,10 +1134,10 @@ for x=1:num_satellites
                 PathSolution3.sat_end(index_count,1) = y;
                 PathSolution3.start(index_count,1) = WindowsDataFirst.start(start_sat,y,1);
                 PathSolution3.end(index_count,1) = WindowsDataFirst.start(start_sat,y,1) + transfer_time;
-                PathSolution3.total_time(index_count,1) = PathSolution3.end(1,1) - start_time_unix;
+                PathSolution3.total_time(index_count,1) = PathSolution3.end(index_count,1) - start_time_unix;
 
                 num_windows=1;
-                while WindowsDataFirst.start(y,q,num_windows) < WindowsDataFirst.start(start_sat,y,1) && num_windows <= length(WindowsDataFirst.start)-1
+                while WindowsDataFirst.start(y,q,num_windows) < WindowsDataFirst.start(start_sat,y,1) && num_windows < length(WindowsDataFirst.start)
                     num_windows = num_windows + 1;
                     k = num_windows;
                 end
@@ -1138,10 +1146,10 @@ for x=1:num_satellites
                 PathSolution3.sat_end(index_count,2) = q;
                 PathSolution3.start(index_count,2) = WindowsDataFirst.start(y,q,k);
                 PathSolution3.end(index_count,2) = WindowsDataFirst.start(y,q,k) + transfer_time;
-                PathSolution3.total_time(index_count,2) = PathSolution3.end(1,2) - start_time_unix;
+                PathSolution3.total_time(index_count,2) = PathSolution3.end(index_count,2) - start_time_unix;
 
                 num_windows=1;
-                while WindowsDataFirst.start(q,end_sat,num_windows) < WindowsDataFirst.start(y,q,k) && num_windows <= length(WindowsDataFirst.start)-1
+                while WindowsDataFirst.start(q,end_sat,num_windows) < WindowsDataFirst.start(y,q,k) && num_windows < length(WindowsDataFirst.start)
                     num_windows = num_windows + 1;
                     m = num_windows;
                 end
@@ -1150,7 +1158,7 @@ for x=1:num_satellites
                 PathSolution3.sat_end(index_count,3) = end_sat;
                 PathSolution3.start(index_count,3) = WindowsDataFirst.start(q,end_sat,m);
                 PathSolution3.end(index_count,3) = WindowsDataFirst.start(q,end_sat,m) + transfer_time;
-                PathSolution3.total_time(index_count,3) = PathSolution3.end(1,2) - start_time_unix;
+                PathSolution3.total_time(index_count,3) = PathSolution3.end(index_count,2) - start_time_unix;
             end
         end
     end
