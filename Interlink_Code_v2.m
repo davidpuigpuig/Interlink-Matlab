@@ -1048,8 +1048,8 @@ if fid_log == -1
   error('Cannot open log file.');
 end
 
-pathfinder_selection = sprintf('Sender satellite selected: %s - Receiver satellite slected: %s - Trasnfer duration [s]: %s',strcat(OrbitData.ID{start_sat},OrbitData.designation{end_sat}),...
-                                strcat(OrbitData.ID{start_sat},OrbitData.designation{end_sat}),pathfinder_answer{1});
+pathfinder_selection = sprintf('Sender satellite selected: %s - Receiver satellite slected: %s - Trasnfer duration [s]: %s',strcat(OrbitData.ID{start_sat},OrbitData.designation{start_sat}),...
+                                strcat(OrbitData.ID{end_sat},OrbitData.designation{end_sat}),pathfinder_answer{1});
 
 fprintf(pathfinder_selection); % Command window print
             
@@ -1113,7 +1113,7 @@ for x=1:num_satellites
         PathSolution2.sat_end(x,1) = y;
         PathSolution2.start(x,1) = WindowsDataFirst.start(start_sat,y,1);
         PathSolution2.end(x,1) = WindowsDataFirst.start(start_sat,y,1) + transfer_time;
-        PathSolution2.total_time(x,1) = PathSolution2.end(1,1) - start_time_unix;
+        PathSolution2.total_time(x,1) = PathSolution2.end(x,1) - start_time_unix;
 
         num_windows = 1;
         k = num_windows;
