@@ -1095,7 +1095,7 @@ for x=1:num_satellites
 
         num_windows = 1;
         k = num_windows;
-        while WindowsDataFirst.start(y,end_sat,num_windows) < WindowsDataFirst.start(start_sat,y,1) && num_windows < length(WindowsDataFirst.start)
+        while WindowsDataFirst.start(y,end_sat,num_windows) < PathSolution2.end(x,1) && num_windows < length(WindowsDataFirst.start)
             num_windows = num_windows + 1;
             k = num_windows;
         end
@@ -1142,7 +1142,7 @@ for x=1:num_satellites
 
                 num_windows=1;
                 k = num_windows;
-                while WindowsDataFirst.start(y,q,num_windows) < WindowsDataFirst.start(start_sat,y,1) && num_windows < length(WindowsDataFirst.start)
+                while WindowsDataFirst.start(y,q,num_windows) < PathSolution3.end(index_count,1) && num_windows < length(WindowsDataFirst.start)
                     num_windows = num_windows + 1;
                     k = num_windows;
                 end
@@ -1155,7 +1155,7 @@ for x=1:num_satellites
 
                 num_windows=1;
                 m = num_windows;
-                while WindowsDataFirst.start(q,end_sat,num_windows) < WindowsDataFirst.start(y,q,k) && num_windows < length(WindowsDataFirst.start)
+                while WindowsDataFirst.start(q,end_sat,num_windows) < PathSolution3.end(index_count,2) && num_windows < length(WindowsDataFirst.start)
                     num_windows = num_windows + 1;
                     m = num_windows;
                 end
@@ -1164,7 +1164,7 @@ for x=1:num_satellites
                 PathSolution3.sat_end(index_count,3) = end_sat;
                 PathSolution3.start(index_count,3) = WindowsDataFirst.start(q,end_sat,m);
                 PathSolution3.end(index_count,3) = WindowsDataFirst.start(q,end_sat,m) + transfer_time;
-                PathSolution3.total_time(index_count,3) = PathSolution3.end(index_count,2) - start_time_unix;
+                PathSolution3.total_time(index_count,3) = PathSolution3.end(index_count,3) - start_time_unix;
             end
         end
     end
