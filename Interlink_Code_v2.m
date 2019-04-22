@@ -802,7 +802,7 @@ for sat1=1:num_satellites-1
                 WindowsData.start(sat2,sat1,num_windows) = WindowsData.start(sat1,sat2,num_windows);
             end
             if step_count > 1
-                if Rcomplex(step_count,num_pairs) >= 0 && Rcomplex(step_count-1,num_pairs) < 0 && num_windows >= 1
+                if Rcomplex(step_count,num_pairs) >= 0 && Rcomplex(step_count-1,num_pairs) < 0
                     WindowsData.end(sat1,sat2,num_windows) = t;
                     WindowsData.time(sat1,sat2,num_windows) = t-WindowsData.start(sat1,sat2,num_windows);
                     WindowsData.end(sat2,sat1,num_windows) = WindowsData.end(sat1,sat2,num_windows);
@@ -810,7 +810,7 @@ for sat1=1:num_satellites-1
                 end
             end
             if step_count > 1
-                if Rcomplex(step_count,num_pairs) < 0 && Rcomplex(step_count-1,num_pairs) < 0 && step_count == num_steps 
+                if Rcomplex(step_count,num_pairs) < 0 && Rcomplex(step_count-1,num_pairs) < 0 && step_count == num_steps
                     WindowsData.end(sat1,sat2,num_windows) = t;
                     WindowsData.time(sat1,sat2,num_windows) = t-WindowsData.start(sat1,sat2,num_windows);
                     WindowsData.end(sat2,sat1,num_windows) = WindowsData.end(sat1,sat2,num_windows);
@@ -1168,7 +1168,7 @@ for x=1:num_satellites
 end
 
 % Best one jump path
-fprintf(sprintf('One jump path from Satellite %d to Satellite %d is:\n',start_sat,end_sat));
+fprintf(sprintf('One-jump path from Satellite %d to Satellite %d is:\n',start_sat,end_sat));
 disp(PathSolution1);
 
 % Best two jumps path
