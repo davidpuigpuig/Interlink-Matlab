@@ -498,7 +498,7 @@ for i=1:num_satellites
     Rangle = 0;                                                             % Visibility parameter [m]
     Rv = 0;                                                                 % Distance from earth to satellite-satellite line
     csv_data = cell(num_steps, 26, 2, num_pairs);                           % Array of matrix to store relevant data
-    WindowsData = struct('start', zeros(num_satellites, num_satellites, 100), 'end', zeros(num_satellites, num_satellites, 100), 'time', zeros(num_satellites, num_satellites, 100));
+    WindowsData = struct('start', zeros(num_satellites, num_satellites, 1000), 'end', zeros(num_satellites, num_satellites, 1000), 'time', zeros(num_satellites, num_satellites, 1000));
 end
 
 %% Log file module
@@ -796,7 +796,7 @@ for sat1=1:num_satellites-1
             end
             
             % Pathfinder feed
-            if Rcomplex(step_count,num_pairs) < 0 && (Rcomplex(step_count-1,num_pairs) >= 0 || step_count == 1)
+            if Rcomplex(step_count,num_pairs) < 0 && (step_count == 1 || Rcomplex(step_count-1,num_pairs) >= 0)
                 num_windows = num_windows + 1;
                 WindowsData.start(sat1,sat2,num_windows) = t;
                 WindowsData.start(sat2,sat1,num_windows) = WindowsData.start(sat1,sat2,num_windows);
@@ -1015,15 +1015,16 @@ else
     lgd2 = legend();
 end
 
-%% Pathfinder Algorithm
+%% Pathfinder Algorithm 
 
 % Transfer time [s]
 transfer_time = 10;
 
 % Fisrt sender and final receiver
 start_sat = 1;
-end_dat = 5;
+end_sat = 5;
 
+% First window per pair able to transfer the required data
 for sat1=1:num_satellites-1
     
     for sat2=sat1+1:num_satellites
@@ -1031,7 +1032,7 @@ for sat1=1:num_satellites-1
         i=sat1;
         j=sat2;
         for x=1:2
-            while (WindowsData.time(i,j,num_windows) < transfer_time || WindowsData.time(i,j,num_windows) == 0) && num_windows <= length(WindowsData.time)
+            while (WindowsData.time(i,j,num_windows) < transfer_time || WindowsData.time(i,j,num_windows) == 0) && num_windows <= length(WindowsData.time)-1
                 num_windows = num_windows + 1;
             end
             if WindowsData.time(i,j,num_windows) > transfer_time && WindowsData.time(i,j,num_windows) > 0
@@ -1046,6 +1047,37 @@ for sat1=1:num_satellites-1
     end
     
 end
+
+% Path Solution
+
+PathSolution = struct('sat_start', zeros(1, num_satellites-1), 'sat_end', zeros(1, num_satellites-1), 'start', zeros(1, num_satellites-1), 'end', zeros(1, num_satellites-1), 'total_time', zeros(1, num_satellites-1));
+
+% One Jump
+PathSolution.sat_start(1,1) = start_sat;
+PathSolution.sat_end(1,1) = end_sat;
+PathSolution.start(1,1) = WindowsDataFirst.start(start_sat,end_sat);
+PathSolution.end(1,1) = WindowsDataFirst.start(start_sat,end_sat) + transfer_time;
+PathSolution.total_time(1,1) = PathSolution.end(1,1) - start_time_unix;
+
+% Two Jumps
+PathSolution.sat_start(1,1) = start_sat;
+PathSolution.sat_end(1,1) = 2;
+PathSolution.start(1,1) = WindowsDataFirst.start(start_sat,2);
+PathSolution.end(1,1) = WindowsDataFirst.start(start_sat,2) + transfer_time;
+PathSolution.total_time(1,1) = PathSolution.end(1,1) - start_time_unix;
+
+PathSolution.sat_start(1,2) = 2;
+PathSolution.sat_end(1,2) = end_sat;
+PathSolution.start(1,2) = WindowsDataFirst.start(2,end_sat);
+PathSolution.end(1,2) = WindowsDataFirst.start(2,end_sat) + transfer_time;
+PathSolution.total_time(1,2) = PathSolution.end(1,2) - start_time_unix;
+
+% Three Jumps
+
+
+% Four Jumps
+
+
 
 %% The End
 
