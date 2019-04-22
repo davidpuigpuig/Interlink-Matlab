@@ -1041,13 +1041,12 @@ for sat1=1:num_satellites-1
         j=sat2;
         for x=1:2
             % 10 Windows per pair
-            target_time = transfer_time;
             num_windows = 1;
             for y=1:10
-                while (WindowsData.time(i,j,num_windows) < target_time || WindowsData.time(i,j,num_windows) == 0) && num_windows < length(WindowsData.time)
+                while WindowsData.time(i,j,num_windows) < transfer_time && num_windows < length(WindowsData.time)
                     num_windows = num_windows + 1;
                 end
-                if WindowsData.time(i,j,num_windows) > transfer_time && WindowsData.time(i,j,num_windows) > 0
+                if WindowsData.time(i,j,num_windows) > transfer_time && WindowsData.start(i,j,num_windows) > 0
                         WindowsDataFirst.start(i,j,y) =  WindowsData.start(i,j,num_windows);
                         WindowsDataFirst.end(i,j,y) = WindowsData.end(i,j,num_windows);
                         WindowsDataFirst.time(i,j,y) =  WindowsData.time(i,j,num_windows);
@@ -1169,14 +1168,14 @@ for x=1:num_satellites
 end
 
 % Best one jump path
-fprintf(sprintf('One jump path from Satellite %d to Satellite %d is:',start_sat,end_sat));
+fprintf(sprintf('One jump path from Satellite %d to Satellite %d is:\n',start_sat,end_sat));
 disp(PathSolution1);
 
 % Best two jumps path
-fprintf(sprintf('Quickest two-jump path from Satellite %d to Satellite %d is:',start_sat,end_sat));
+fprintf(sprintf('Quickest two-jump path from Satellite %d to Satellite %d is:\n',start_sat,end_sat));
 
 % Best three jumps path
-fprintf(sprintf('Quickest three-jump path from Satellite %d to Satellite %d is:',start_sat,end_sat));
+fprintf(sprintf('Quickest three-jump path from Satellite %d to Satellite %d is:\n',start_sat,end_sat));
 
 %% The End
 
