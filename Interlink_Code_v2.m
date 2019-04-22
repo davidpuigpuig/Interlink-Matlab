@@ -1025,12 +1025,13 @@ end
 
 %% Pathfinder Algorithm 
 
-% Transfer time [s]
-transfer_time = 100;
-
-% Fisrt sender and final receiver
-start_sat = 1;
-end_sat = 5;
+prompt = {'Satellite sender:', 'Satellite receiver:', 'Transfer duration [s]:'};
+dlgtitle = 'Pathfinder';
+dims = [1 70; 1 70; 1,70];
+pathfinder_answer = inputdlg(prompt,dlgtitle,dims);
+start_sat = str2double(pathfinder_answer{1});
+end_sat = str2double(pathfinder_answer{2});
+transfer_time = str2double(pathfinder_answer{3});
 
 % Windows per pair able to transfer the required data
 for sat1=1:num_satellites-1
