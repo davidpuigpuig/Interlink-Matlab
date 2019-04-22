@@ -428,7 +428,7 @@ if indx == 1
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
     
-    time_divisions = 500; %4320 is every 10 seconds for a 12h simulation
+    time_divisions = 4320; %4320 is every 10 seconds for a 12h simulation
      
 else
     prompt = {'Simulation start:', 'Simulation end:', 'Time divisons (steps):'};
@@ -1094,7 +1094,8 @@ for x=1:num_satellites
         PathSolution2.end(x,1) = WindowsDataFirst.start(start_sat,y,1) + transfer_time;
         PathSolution2.total_time(x,1) = PathSolution2.end(1,1) - start_time_unix;
 
-        num_windows=1;
+        num_windows = 1;
+        k = num_windows;
         while WindowsDataFirst.start(y,end_sat,num_windows) < WindowsDataFirst.start(start_sat,y,1) && num_windows < length(WindowsDataFirst.start)
             num_windows = num_windows + 1;
             k = num_windows;
@@ -1138,6 +1139,7 @@ for x=1:num_satellites
                 PathSolution3.total_time(index_count,1) = PathSolution3.end(index_count,1) - start_time_unix;
 
                 num_windows=1;
+                k = num_windows;
                 while WindowsDataFirst.start(y,q,num_windows) < WindowsDataFirst.start(start_sat,y,1) && num_windows < length(WindowsDataFirst.start)
                     num_windows = num_windows + 1;
                     k = num_windows;
@@ -1150,6 +1152,7 @@ for x=1:num_satellites
                 PathSolution3.total_time(index_count,2) = PathSolution3.end(index_count,2) - start_time_unix;
 
                 num_windows=1;
+                k = num_windows;
                 while WindowsDataFirst.start(q,end_sat,num_windows) < WindowsDataFirst.start(y,q,k) && num_windows < length(WindowsDataFirst.start)
                     num_windows = num_windows + 1;
                     m = num_windows;
@@ -1164,6 +1167,16 @@ for x=1:num_satellites
         end
     end
 end
+
+% Best one jump path
+fprintf(sprintf('One jump path from Satellite %d to Satellite %d is:',start_sat,end_sat));
+disp(PathSolution1);
+
+% Best two jumps path
+fprintf(sprintf('Quickest two-jump path from Satellite %d to Satellite %d is:',start_sat,end_sat));
+
+% Best three jumps path
+fprintf(sprintf('Quickest three-jump path from Satellite %d to Satellite %d is:',start_sat,end_sat));
 
 %% The End
 
