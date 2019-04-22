@@ -1024,24 +1024,31 @@ transfer_time = 10;
 start_sat = 1;
 end_sat = 5;
 
-% First window per pair able to transfer the required data
+% Windows per pair able to transfer the required data
 for sat1=1:num_satellites-1
     
     for sat2=sat1+1:num_satellites
-        num_windows = 1;
         i=sat1;
         j=sat2;
         for x=1:2
-            while (WindowsData.time(i,j,num_windows) < transfer_time || WindowsData.time(i,j,num_windows) == 0) && num_windows <= length(WindowsData.time)-1
-                num_windows = num_windows + 1;
+            % First Window per pair
+            target_time = transfer_time;
+            for y=1:3
+                num_windows = 1;
+                while (WindowsData.time(i,j,num_windows) < target_time || WindowsData.time(i,j,num_windows) == 0) && num_windows <= length(WindowsData.time)-1
+                    num_windows = num_windows + 1;
+                end
+                if WindowsData.time(i,j,num_windows) > transfer_time && WindowsData.time(i,j,num_windows) > 0
+                        WindowsDataFirst.start(i,j,y) =  WindowsData.start(i,j,num_windows);
+                        WindowsDataFirst.end(i,j,y) = WindowsData.end(i,j,num_windows);
+                        WindowsDataFirst.time(i,j,y) =  WindowsData.time(i,j,num_windows);
+                        target_time = WindowsData.time(i,j,num_windows);
+                end
             end
-            if WindowsData.time(i,j,num_windows) > transfer_time && WindowsData.time(i,j,num_windows) > 0
-                    WindowsDataFirst.start(i,j) =  WindowsData.start(i,j,num_windows);
-                    WindowsDataFirst.end(i,j) = WindowsData.end(i,j,num_windows);
-                    WindowsDataFirst.time(i,j) =  WindowsData.time(i,j,num_windows);
-            end
+            
             i=sat2;
             j=sat1;
+            
         end
         
     end
@@ -1052,12 +1059,30 @@ end
 
 PathSolution = struct('sat_start', zeros(1, num_satellites-1), 'sat_end', zeros(1, num_satellites-1), 'start', zeros(1, num_satellites-1), 'end', zeros(1, num_satellites-1), 'total_time', zeros(1, num_satellites-1));
 
-% One Jump
-PathSolution.sat_start(1,1) = start_sat;
-PathSolution.sat_end(1,1) = end_sat;
-PathSolution.start(1,1) = WindowsDataFirst.start(start_sat,end_sat);
-PathSolution.end(1,1) = WindowsDataFirst.start(start_sat,end_sat) + transfer_time;
-PathSolution.total_time(1,1) = PathSolution.end(1,1) - start_time_unix;
+for jumps=1:num_satellites-1
+    for num_jump=1:jumps
+        if num_jump == 1
+            sat1 = start_sat;
+        else
+            %for que tria el sat 1
+                %sat1 = 
+        end
+
+        elseif num_jump == jumps
+            sat2 = end_sat;
+        else
+            %for que tria el sat 2
+                %sat2 =
+        end
+        if WindowsDataFirst.start(sat1,sat2) > 0 && WindowsDataFirst.start(sat1,sat2) < PathSolution.total_time(1,num_jump)
+            PathSolution.sat_start(1,num_jump) = sat1;
+            PathSolution.sat_end(1,num_jump) = sat2;
+            PathSolution.start(1,num_jump) = WindowsDataFirst.start(sat1,sat2);
+            PathSolution.end(1,num_jump) = WindowsDataFirst.start(sat1,sat2) + transfer_time;
+            PathSolution.total_time(1,num_jump) = PathSolution.end(1,1) - start_time_unix;
+        end
+    end
+end
 
 % Two Jumps
 PathSolution.sat_start(1,1) = start_sat;
