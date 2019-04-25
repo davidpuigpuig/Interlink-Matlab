@@ -596,9 +596,9 @@ addpath([pwd, '\SGP4']);
 
 OrbitDataProp = OrbitData;
 
-tic; % Runtime start
-
 num_pairs = 0;
+
+tic; % Runtime start
 
 for sat1=1:num_satellites-1
     
