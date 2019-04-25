@@ -153,10 +153,10 @@ if indx == 1
             txt_data_second = textscan(selected_example_answers{1}{index+2,1},'%s %s %s %s %s %s %s %s %s');
 
             % Translate two line element data into obital elements
-            OrbitData.i(j)     = str2double(txt_data_second{1,3})*(pi/180); % Inclination [deg] to [rad/s]
-            OrbitData.RAAN(j)  = str2double(txt_data_second{1,4})*(pi/180); % Right ascention of the ascending node[deg] to [rad/s]
-            OrbitData.omega(j) = str2double(txt_data_second{1,6})*(pi/180); % Argument of the periapsis [deg] to [rad/s]
-            OrbitData.M(j)     = str2double(txt_data_second{1,7})*(pi/180); % Mean anomaly [deg] to [rad/s]
+            OrbitData.i(j)     = str2double(txt_data_second{1,3})*(pi/180); % Inclination [deg] to [rad]
+            OrbitData.RAAN(j)  = str2double(txt_data_second{1,4})*(pi/180); % Right ascention of the ascending node[deg] to [rad]
+            OrbitData.omega(j) = str2double(txt_data_second{1,6})*(pi/180); % Argument of the periapsis [deg] to [rad]
+            OrbitData.M(j)     = str2double(txt_data_second{1,7})*(pi/180); % Mean anomaly [deg] to [rad]
             n                  = str2double(txt_data_second{1,8});          % Unperturbed mean motion [rev/day]
             OrbitData.n(j)     = n*2*pi/24/60/60;                           % Unperturbed mean motion [rad/s]
             OrbitData.a(j)     = ( mu / OrbitData.n(j)^2 )^(1/3);           % Semi-major axis [m]
@@ -243,10 +243,10 @@ elseif indx == 2
             index = sat_id_line(j);
 
             % Translate two line element data into obital elements
-            OrbitData.i(j)     = str2double(txt_data{1,3}{index+2})*(pi/180);           % Inclination [deg] to [rad/s]
-            OrbitData.RAAN(j)  = str2double(txt_data{1,4}{index+2})*(pi/180);           % Right ascention of the ascending node[deg] to [rad/s]
-            OrbitData.omega(j) = str2double(txt_data{1,6}{index+2})*(pi/180);           % Argument of the periapsis [deg] to [rad/s]
-            OrbitData.M(j)     = str2double(txt_data{1,7}{index+2})*(pi/180);           % Mean anomaly [deg] to [rad/s]
+            OrbitData.i(j)     = str2double(txt_data{1,3}{index+2})*(pi/180);           % Inclination [deg] to [rad]
+            OrbitData.RAAN(j)  = str2double(txt_data{1,4}{index+2})*(pi/180);           % Right ascention of the ascending node[deg] to [rad]
+            OrbitData.omega(j) = str2double(txt_data{1,6}{index+2})*(pi/180);           % Argument of the periapsis [deg] to [rad]
+            OrbitData.M(j)     = str2double(txt_data{1,7}{index+2})*(pi/180);           % Mean anomaly [deg] to [rad]
             n                  = str2double(txt_data{1,8}{index+2});                    % Unperturbed mean motion [rev/day]
             OrbitData.n(j)     = n*2*pi/24/60/60;                                       % Unperturbed mean motion [rad/s]
             OrbitData.a(j)     = ( mu / OrbitData.n(j)^2 )^(1/3);                       % Semi-major axis [m]
@@ -354,10 +354,10 @@ elseif indx == 3
         txt_data_second = textscan(tle_pasted_answer{1}(index+2,1:69),'%s %s %s %s %s %s %s %s %s');
         
         % Translate two line element data into obital elements
-        OrbitData.i(j)     = str2double(txt_data_second{1,3})*(pi/180);     % Inclination [deg] to [rad/s]
-        OrbitData.RAAN(j)  = str2double(txt_data_second{1,4})*(pi/180);     % Right ascention of the ascending node[deg] to [rad/s]
-        OrbitData.omega(j) = str2double(txt_data_second{1,6})*(pi/180);     % Argument of the periapsis [deg] to [rad/s]
-        OrbitData.M(j)     = str2double(txt_data_second{1,7})*(pi/180);     % Mean anomaly [deg] to [rad/s]
+        OrbitData.i(j)     = str2double(txt_data_second{1,3})*(pi/180);     % Inclination [deg] to [rad]
+        OrbitData.RAAN(j)  = str2double(txt_data_second{1,4})*(pi/180);     % Right ascention of the ascending node[deg] to [rad]
+        OrbitData.omega(j) = str2double(txt_data_second{1,6})*(pi/180);     % Argument of the periapsis [deg] to [rad]
+        OrbitData.M(j)     = str2double(txt_data_second{1,7})*(pi/180);     % Mean anomaly [deg] to [rad]
         n                  = str2double(txt_data_second{1,8});              % Unperturbed mean motion [rev/day]
         OrbitData.n(j)     = n*2*pi/24/60/60;                               % Unperturbed mean motion [rad/s]
         OrbitData.a(j)     = ( mu / OrbitData.n(j)^2 )^(1/3);               % Semi-major axis [m]
