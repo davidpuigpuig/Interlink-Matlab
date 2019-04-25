@@ -46,7 +46,7 @@ k = 2*pi;      % Factor from [rev/s] to [rad/s]
 if indx == 1
     % Earth System parameters
     body_radius = 6.378e6;                          % Radius of the primary body [m]
-    extra_radius = 0;                               % Extra radius for the primary body [m]
+    extra_radius = 100000;                               % Extra radius for the primary body [m]
     S = body_radius + extra_radius;                 % Magnitude of the rise-set vector [m]
     mu = 3.986004418e14;                            % Standard gravitational parameter [m^3/s^2]
 else
@@ -412,7 +412,7 @@ disp('Starting InterLink...')
 
 if indx == 1
     % Simulation Parameters
-    start_time = '25-Apr-2019 17:14:00';
+    start_time = '22-May-2008 12:00:00';
     %start_time = datetime('now', 'TimeZone', 'UTC');
     
     start_time_unix = posixtime(datetime(start_time));
@@ -420,7 +420,7 @@ if indx == 1
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     
-    end_time = '25-Apr-2019 23:00:00';
+    end_time = '22-May-2008 18:00:00';
     %end_time = datetime('now', 'TimeZone', 'UTC') + days(1);
     
     end_time_unix = posixtime(datetime(end_time));
@@ -470,16 +470,17 @@ end
 
 % Preallocated variables
 for i=1:num_satellites
-    n = zeros(1, num_satellites);                                           % Unperturbed mean motion [rev/day]
-    M = zeros(1, num_satellites);                                           % Mean anomaly [degrees]
-    Fn = zeros(1, num_satellites);                                          % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n) [degrees or rad]
-    Fn1 = zeros(1, num_satellites);                                         % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n+1) [degrees or rad] 
-    f = zeros(1, num_satellites);                                           % True Anomaly [degrees]
-    A = zeros(1, num_satellites);                                           % Barker's Equation parameter [degrees]
+    n = zeros(1, num_satellites);                                           % Unperturbed mean motion [rad/s]
+    M = zeros(1, num_satellites);                                           % Mean anomaly [rad]
+    Fn = zeros(1, num_satellites);                                          % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n) [rad]
+    Fn1 = zeros(1, num_satellites);                                         % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n+1) [rad] 
+    f = zeros(1, num_satellites);                                           % True Anomaly [rad]
+    f2 = zeros(1, num_satellites);                                          % True Anomaly [rad]
+    A = zeros(1, num_satellites);                                           % Barker's Equation parameter
     B = zeros(1, num_satellites);                                           % Barker's Equation parameter
     C = zeros(1, num_satellites);                                           % Barker's Equation parameter
-    En = zeros(1, num_satellites);                                          % Eccentric anomaly from Kepler's Equation (n) [degrees or rad]
-    En1 = zeros(1, num_satellites);                                         % Eccentric anomaly from Kepler's Equation (n+1) [degrees or rad]
+    En = zeros(1, num_satellites);                                          % Eccentric anomaly from Kepler's Equation (n) [rad]
+    En1 = zeros(1, num_satellites);                                         % Eccentric anomaly from Kepler's Equation (n+1) [rad]
     Px = zeros(1, num_satellites);                                          % First component of the unit orientation vector (dynamical center-periapsis) [m] 
     Py = zeros(1, num_satellites);                                          % Second component of the unit orientation vector (dynamical center-periapsis) [m] 
     Pz = zeros(1, num_satellites);                                          % Third component of the unit orientation vector (dynamical center-periapsis) [m] 
@@ -496,7 +497,7 @@ for i=1:num_satellites
     Rsimple2 = 0;                                                           % Visibility parameter [m]
     Rcomplex = zeros(num_steps, num_pairs);                                 % Visibility parameter [m]
     Rangle = 0;                                                             % Visibility parameter [m]
-    Rv = 0;                                                                 % Distance from earth to satellite-satellite line
+    Rv = 0;                                                                 % Distance from earth to satellite-satellite line [m]
     csv_data = cell(num_steps, 27, 2, num_pairs);                           % Array of matrix to store relevant data
     WindowsData = struct('start', zeros(num_satellites, num_satellites, 1000), 'end', zeros(num_satellites, num_satellites, 1000), 'time', zeros(num_satellites, num_satellites, 1000));
     WindowsDataFirst = struct('start', zeros(num_satellites, num_satellites, 10), 'end', zeros(num_satellites, num_satellites, 10), 'time', zeros(num_satellites, num_satellites, 10));
@@ -679,7 +680,17 @@ for sat1=1:num_satellites-1
                         E=E-fdee/fprimadee;
                     end
 
-                    f(i) = atan((sin(En(i))*sqrt(1-OrbitDataProp.e(i)^2))/(cos(En(i))-OrbitDataProp.e(i)));
+                    f2(i) = atan((sin(En(i))*sqrt(1-OrbitDataProp.e(i)^2))/(cos(En(i))-OrbitDataProp.e(i)));
+                    
+                    % Convert mean anomaly to true anomaly.
+                    % First, compute the eccentric anomaly.
+                    Ea = Keplers_Eqn(M(i),OrbitDataProp.e(i));
+
+                    % Compute the true anomaly f.
+                    y = sin(Ea)*sqrt(1-OrbitDataProp.e(i)^2)/(1-OrbitDataProp.e(i)*cos(Ea));
+                    z = (cos(Ea)-OrbitDataProp.e(i))/(1-OrbitDataProp.e(i)*cos(Ea));
+
+                    f(i) = atan2(y,z);
 
                 else
                     error('Eccentricity cannot be a negative value')
@@ -1052,7 +1063,7 @@ end
 pathfinder_selection = sprintf('Sender satellite selected: %s - Receiver satellite selected: %s - Transfer duration [s]: %s',strcat(OrbitData.ID{start_sat},OrbitData.designation{start_sat}),...
                                 strcat(OrbitData.ID{end_sat},OrbitData.designation{end_sat}),pathfinder_answer{1});
 
-fprintf(pathfinder_selection); % Command window print
+fprintf('%s\n',pathfinder_selection); % Command window print
             
 fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), pathfinder_selection); % Log print
 
@@ -1188,14 +1199,14 @@ if num_satellites > 3
 end
 
 % Best one jump path
-fprintf(sprintf('One-jump path from Satellite %d to Satellite %d is:\n',start_sat,end_sat)); % Command window print
-fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), sprintf('One-jump path from Satellite %d to Satellite %d is:',start_sat,end_sat)); % Log print
 satellite1_name = strcat(OrbitData.ID{PathSolution1.sat_start},OrbitData.designation{PathSolution1.sat_start});
 satellite2_name = strcat(OrbitData.ID{PathSolution1.sat_end},OrbitData.designation{PathSolution1.sat_end});
+fprintf(sprintf('One-jump path from %s to %s is:\n',satellite1_name,satellite2_name)); % Command window print
+fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), sprintf('One-jump path from %s to %s is:',satellite1_name,satellite2_name)); % Log print
 date1 = datestr(datetime(PathSolution1.start,'ConvertFrom','posixtime'));
 date2 = datestr(datetime(PathSolution1.end,'ConvertFrom','posixtime'));
 
-if PathSolution1.total_time == 0
+if PathSolution1.total_time <= 0
     disp('Path is not possible') % Command window print
     fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Path is not possible'); % Log print
 else
@@ -1220,8 +1231,10 @@ if num_satellites > 2
         end
     end
 
-    fprintf(sprintf('Quickest two-jump path from Satellite %d to Satellite %d is:\n',start_sat,end_sat)); % Command window print
-    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), sprintf('Quickest two-jump path from Satellite %d to Satellite %d is:',start_sat,end_sat)); % Log print
+    satellite_start_name = strcat(OrbitData.ID{start_sat},OrbitData.designation{start_sat});
+    satellite_end_name = strcat(OrbitData.ID{end_sat},OrbitData.designation{end_sat});
+    fprintf(sprintf('Quickest two-jump path from %s to %s is:\n',satellite_start_name,satellite_end_name)); % Command window print
+    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), sprintf('Quickest two-jump path from %s to %s is:',satellite_start_name,satellite_end_name)); % Log print
 
     if quick_path2 == start_time_unix
         disp('Path is not possible') % Command window print
@@ -1266,8 +1279,10 @@ if num_satellites > 3
         end
     end
 
-    fprintf(sprintf('Quickest three-jump path from Satellite %d to Satellite %d is:\n',start_sat,end_sat)); % Command window
-    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), sprintf('Quickest three-jump path from Satellite %d to Satellite %d is:',start_sat,end_sat)); % Log print
+    satellite_start_name = strcat(OrbitData.ID{start_sat},OrbitData.designation{start_sat});
+    satellite_end_name = strcat(OrbitData.ID{end_sat},OrbitData.designation{end_sat});
+    fprintf(sprintf('Quickest three-jump path from %s to %s is:\n',satellite_start_name,satellite_end_name)); % Command window
+    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), sprintf('Quickest three-jump path from %s to %s is:',satellite_start_name,satellite_end_name)); % Log print
 
     if quick_path3 == start_time_unix
         disp('Path is not possible') % Command window print
