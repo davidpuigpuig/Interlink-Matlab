@@ -886,7 +886,7 @@ if indx == 2
         plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
               'color', colors(i,:), 'LineWidth', 1, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Orbit'))
         plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
-              '.', 'color', colors(i,:), 'MarkerSize', 10, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Starting Point'))
+              '.', 'color', colors(i,:), 'MarkerSize', 30, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Starting Point'))
     end
     lgd2 = legend('AutoUpdate', 'off');
     
@@ -981,7 +981,7 @@ elseif indx == 1
         plot3(RSave(:,1,i) / body_radius, RSave(:,2,i) / body_radius, RSave(:,3,i) / body_radius,...
               'color', colors(i,:), 'LineWidth', 1, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Orbit'))
         plot3(RSave(1,1,i) / body_radius, RSave(1,2,i) / body_radius, RSave(1,3,i) / body_radius,...
-              '.', 'color', colors(i,:), 'MarkerSize', 10, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Starting Point'))
+              '.', 'color', colors(i,:), 'MarkerSize', 30, 'DisplayName', strcat(OrbitData.ID{i}, OrbitData.designation{i}, ' - Starting Point'))
     end
     lgd2 = legend();
 end
@@ -1274,14 +1274,21 @@ else
                             satellite6_name, date5, date6, num2str(PathSolution3.total_time(quick_path3_id,3)))); % Command winodow print
             fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),...
                         sprintf('Third Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',...
-                        satellite5_name, satellite6_name, date5, date6, num2str(PathSolution3.total_time(quick_path3_id,3)))); % Log print
+                        satellite5_name, satellite6_name, date5, date6, num2str(PathSolution3.total_time(quick_path3_id,3)))); % Log print                          
         end
     end
+    fclose(fid_log); % Closing log file   
 end
 
 %% The End
 
 disp('InterLink ended successfully') % Command winodow print
+
+fid_log = fopen(fullfile([pwd, '/logs'], full_name_log), 'a'); % Setting log file to append mode
+
+if fid_log == -1
+  error('Cannot open log file.');
+end
 
 fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'InterLink ended successfully');
 fclose(fid_log); % Closing log file
