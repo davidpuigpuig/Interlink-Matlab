@@ -46,7 +46,7 @@ k = 2*pi;      % Factor from [rev/s] to [rad/s]
 if indx == 1
     % Earth System parameters
     body_radius = 6.378e6;                          % Radius of the primary body [m]
-    extra_radius = 0;                           % Extra radius for the primary body [m]
+    extra_radius = 20000;                           % Extra radius for the primary body [m]
     S = body_radius + extra_radius;                 % Magnitude of the rise-set vector [m]
     mu = 3.986004418e14;                            % Standard gravitational parameter [m^3/s^2]
 else
@@ -412,7 +412,7 @@ disp('Starting InterLink...')
 
 if indx == 1
     % Simulation Parameters
-    start_time = '22-May-2008 22:43:00';
+    start_time = '22-May-2008 12:00:00';
     %start_time = datetime('now', 'TimeZone', 'UTC');
     
     start_time_unix = posixtime(datetime(start_time));
@@ -428,7 +428,7 @@ if indx == 1
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
     
-    time_divisions = 500; %4320 is every 10 seconds for a 12h simulation
+    time_divisions = 10000; %4320 is every 10 seconds for a 12h simulation
      
 else
     prompt = {'Simulation start:', 'Simulation end:', 'Time divisons (steps):'};
@@ -475,7 +475,6 @@ for i=1:num_satellites
     Fn = zeros(1, num_satellites);                                          % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n) [rad]
     Fn1 = zeros(1, num_satellites);                                         % Eccentric anomaly from Kepler's Equation for hyperbolic orbit (n+1) [rad] 
     f = zeros(1, num_satellites);                                           % True Anomaly [rad]
-    f2 = zeros(1, num_satellites);                                          % True Anomaly [rad]
     A = zeros(1, num_satellites);                                           % Barker's Equation parameter
     B = zeros(1, num_satellites);                                           % Barker's Equation parameter
     C = zeros(1, num_satellites);                                           % Barker's Equation parameter
@@ -625,11 +624,7 @@ for sat1=1:num_satellites-1
                 OrbitDataProp.q(i) = OrbitDataProp.a(i)*(1-OrbitDataProp.e(i));
                 
                 % Step 1 - Finding unperturbed mean motion
-                if OrbitDataProp.e(i) > 1
-                    n(i) = k*sqrt(mu/-OrbitDataProp.a(i)^3);
-                elseif OrbitDataProp.e(i) == 1
-                    n(i) = k*sqrt(mu/(2*OrbitDataProp.q(i)^3));
-                elseif OrbitDataProp.e(i) < 1 && OrbitDataProp.e(i) >= 0
+                if OrbitDataProp.e(i) >= 0 
                     n(i) = OrbitDataProp.n(i);
                 else
                     error('Eccentricity cannot be a negative value')
@@ -640,7 +635,6 @@ for sat1=1:num_satellites-1
 
                 % Step 3 - Finding true anomaly 
                 if OrbitDataProp.e(i) > 1
-                    % Iteration method 1
                     Fn(i) = 6*M(i);
                     error = 1;
                     while error > 1e-8
@@ -1000,284 +994,288 @@ for i=1:num_satellites
     path_tle_list{i} = satellite_string;
 end
 
-[indx,~] = listdlg('ListString',path_tle_list,'Name','Pathfinder. Satellite sender','PromptString','Select sender',...
+[indx,tf] = listdlg('ListString',path_tle_list,'Name','Pathfinder. Satellite sender','PromptString','Select sender',...
                     'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
-
-start_sat = indx;
-
-[indx,~] = listdlg('ListString',path_tle_list,'Name','Pathfinder. Satellite receiver','PromptString','Select receiver',...
-                    'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
-               
-end_sat = indx;
-
-prompt = {'Transfer duration [s]:'};
-dlgtitle = 'Pathfinder transfer time';
-dims = [1 70];
-pathfinder_answer = inputdlg(prompt,dlgtitle,dims);
-transfer_time = str2double(pathfinder_answer{1});
-
-fid_log = fopen(fullfile([pwd, '/logs'], full_name_log), 'a'); % Setting log file to append mode
-
-if fid_log == -1
-  error('Cannot open log file.');
-end
-
-pathfinder_selection = sprintf('Sender satellite selected: %s - Receiver satellite selected: %s - Transfer duration [s]: %s',strcat(OrbitData.ID{start_sat},OrbitData.designation{start_sat}),...
-                                strcat(OrbitData.ID{end_sat},OrbitData.designation{end_sat}),pathfinder_answer{1});
-
-fprintf('%s\n',pathfinder_selection); % Command window print
-            
-fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), pathfinder_selection); % Log print
-
-% Windows per pair able to transfer the required data
-for sat1=1:num_satellites-1
-    
-    for sat2=sat1+1:num_satellites
-        i=sat1;
-        j=sat2;
-        for x=1:2
-            % 10 Windows per pair
-            num_windows = 1;
-            for y=1:10
-                while WindowsData.time(i,j,num_windows) < transfer_time && num_windows < length(WindowsData.time)
-                    num_windows = num_windows + 1;
-                end
-                if WindowsData.time(i,j,num_windows) > transfer_time && WindowsData.start(i,j,num_windows) > 0
-                        WindowsDataFirst.start(i,j,y) =  WindowsData.start(i,j,num_windows);
-                        WindowsDataFirst.end(i,j,y) = WindowsData.end(i,j,num_windows);
-                        WindowsDataFirst.time(i,j,y) =  WindowsData.time(i,j,num_windows);
-                        num_windows = num_windows + 1;
-                end
-            end
-            
-            i=sat2;
-            j=sat1;
-            
-        end
-        
-    end
-    
-end
-
-% Path Solution
-
-PathSolution1 = struct('sat_start', zeros(1, 1), 'sat_end', zeros(1, 1), 'start', zeros(1, 1), 'end', zeros(1, 1), 'total_time', zeros(1, 1));
-PathSolution2 = struct('sat_start', zeros(num_satellites-2, 2), 'sat_end', zeros(num_satellites-2, 2), 'start', zeros(num_satellites-2, 2), 'end', zeros(num_satellites-2, 2), 'total_time', zeros(num_satellites-2, 2));
-PathSolution3 = struct('sat_start', zeros((num_satellites-2)*((num_satellites-2)-1), 3), 'sat_end', zeros((num_satellites-2)*((num_satellites-2)-1), 3), 'start', zeros((num_satellites-2)*((num_satellites-2)-1), 3), 'end', zeros((num_satellites-2)*((num_satellites-2)-1), 3), 'total_time', zeros((num_satellites-2)*((num_satellites-2)-1), 3));
-
-% One Jump Path
-PathSolution1.sat_start(1,1) = start_sat;
-PathSolution1.sat_end(1,1) = end_sat;
-PathSolution1.start(1,1) = WindowsDataFirst.start(start_sat,end_sat,1);
-PathSolution1.end(1,1) = WindowsDataFirst.start(start_sat,end_sat,1) + transfer_time;
-PathSolution1.total_time(1,1) = PathSolution1.end(1,1) - start_time_unix;
-
-% Two Jumps Path
-if num_satellites > 2
-    index_count = 0;
-    for x=1:num_satellites
-        y = x;
-        while y == end_sat || y == start_sat
-            y = y+1;
-        end
-        if y > num_satellites
-        else
-            index_count = index_count + 1;
-            PathSolution2.sat_start(index_count,1) = start_sat;
-            PathSolution2.sat_end(index_count,1) = y;
-            PathSolution2.start(index_count,1) = WindowsDataFirst.start(start_sat,y,1);
-            PathSolution2.end(index_count,1) = WindowsDataFirst.start(start_sat,y,1) + transfer_time;
-            PathSolution2.total_time(index_count,1) = PathSolution2.end(index_count,1) - start_time_unix;
-
-            num_windows = 1;
-            k = num_windows;
-            while WindowsDataFirst.start(y,end_sat,num_windows) < PathSolution2.end(index_count,1) && num_windows < length(WindowsDataFirst.start)
-                num_windows = num_windows + 1;
-                k = num_windows;
-            end
-
-            PathSolution2.sat_start(index_count,2) = y;
-            PathSolution2.sat_end(index_count,2) = end_sat;
-            PathSolution2.start(index_count,2) = WindowsDataFirst.start(y,end_sat,k);
-            PathSolution2.end(index_count,2) = WindowsDataFirst.start(y,end_sat,k) + transfer_time;
-            PathSolution2.total_time(index_count,2) = PathSolution2.end(index_count,2) - start_time_unix;
-        end
-    end
-end
-
-% Three Jumps Path
-if num_satellites > 3
-    index_count = 0;
-    for x=1:num_satellites
-        y = x;
-        while y == end_sat || y == start_sat
-            y = y+1;
-        end
-        if y > num_satellites
-        else
-            for z=1:num_satellites
-                q = z;
-                while q == end_sat || q == start_sat || q == y
-                    q = q+1;
-                end
-                if q > num_satellites
-                else
-                    index_count = index_count + 1;
-                    PathSolution3.sat_start(index_count,1) = start_sat;
-                    PathSolution3.sat_end(index_count,1) = y;
-                    PathSolution3.start(index_count,1) = WindowsDataFirst.start(start_sat,y,1);
-                    PathSolution3.end(index_count,1) = WindowsDataFirst.start(start_sat,y,1) + transfer_time;
-                    PathSolution3.total_time(index_count,1) = PathSolution3.end(index_count,1) - start_time_unix;
-
-                    num_windows=1;
-                    k = num_windows;
-                    while WindowsDataFirst.start(y,q,num_windows) < PathSolution3.end(index_count,1) && num_windows < length(WindowsDataFirst.start)
-                        num_windows = num_windows + 1;
-                        k = num_windows;
-                    end
-
-                    PathSolution3.sat_start(index_count,2) = y;
-                    PathSolution3.sat_end(index_count,2) = q;
-                    PathSolution3.start(index_count,2) = WindowsDataFirst.start(y,q,k);
-                    PathSolution3.end(index_count,2) = WindowsDataFirst.start(y,q,k) + transfer_time;
-                    PathSolution3.total_time(index_count,2) = PathSolution3.end(index_count,2) - start_time_unix;
-
-                    num_windows=1;
-                    m = num_windows;
-                    while WindowsDataFirst.start(q,end_sat,num_windows) < PathSolution3.end(index_count,2) && num_windows < length(WindowsDataFirst.start)
-                        num_windows = num_windows + 1;
-                        m = num_windows;
-                    end
-
-                    PathSolution3.sat_start(index_count,3) = q;
-                    PathSolution3.sat_end(index_count,3) = end_sat;
-                    PathSolution3.start(index_count,3) = WindowsDataFirst.start(q,end_sat,m);
-                    PathSolution3.end(index_count,3) = WindowsDataFirst.start(q,end_sat,m) + transfer_time;
-                    PathSolution3.total_time(index_count,3) = PathSolution3.end(index_count,3) - start_time_unix;
-                end
-            end
-        end
-    end
-end
-
-% Best one jump path
-satellite1_name = strcat(OrbitData.ID{PathSolution1.sat_start},OrbitData.designation{PathSolution1.sat_start});
-satellite2_name = strcat(OrbitData.ID{PathSolution1.sat_end},OrbitData.designation{PathSolution1.sat_end});
-fprintf(sprintf('One-jump path from %s to %s is:\n',satellite1_name,satellite2_name)); % Command window print
-fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), sprintf('One-jump path from %s to %s is:',satellite1_name,satellite2_name)); % Log print
-date1 = datestr(datetime(PathSolution1.start,'ConvertFrom','posixtime'));
-date2 = datestr(datetime(PathSolution1.end,'ConvertFrom','posixtime'));
-
-if PathSolution1.total_time <= 0
-    disp('Path is not possible') % Command window print
-    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Path is not possible'); % Log print
+                
+if tf == 0
+    disp('User selected Quit');
 else
-    fprintf(sprintf('Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s\n', satellite1_name,...
-                satellite2_name, date1, date2, num2str(PathSolution1.total_time))); % Command window print
-    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),...
-            sprintf('Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',... 
-            satellite1_name, satellite2_name, date1, date2, num2str(PathSolution1.total_time))); % Log print
-end
+    start_sat = indx;
 
-% Best two-jumps path
-if num_satellites > 2
-    quick_path2 = start_time_unix;
-    for i=1:length(PathSolution2.total_time)
-        if PathSolution2.total_time(i,1) > 0
-            if PathSolution2.total_time(i,2) > 0
-                if PathSolution2.total_time(i,2) < quick_path2
-                    quick_path2 = PathSolution2.total_time(i,2);
-                    quick_path2_id = i;
+    [indx,~] = listdlg('ListString',path_tle_list,'Name','Pathfinder. Satellite receiver','PromptString','Select receiver',...
+                        'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
+
+    end_sat = indx;
+
+    prompt = {'Transfer duration [s]:'};
+    dlgtitle = 'Pathfinder transfer time';
+    dims = [1 70];
+    pathfinder_answer = inputdlg(prompt,dlgtitle,dims);
+    transfer_time = str2double(pathfinder_answer{1});
+
+    fid_log = fopen(fullfile([pwd, '/logs'], full_name_log), 'a'); % Setting log file to append mode
+
+    if fid_log == -1
+      error('Cannot open log file.');
+    end
+
+    pathfinder_selection = sprintf('Sender satellite selected: %s - Receiver satellite selected: %s - Transfer duration [s]: %s',strcat(OrbitData.ID{start_sat},OrbitData.designation{start_sat}),...
+                                    strcat(OrbitData.ID{end_sat},OrbitData.designation{end_sat}),pathfinder_answer{1});
+
+    fprintf('%s\n',pathfinder_selection); % Command window print
+
+    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), pathfinder_selection); % Log print
+
+    % Windows per pair able to transfer the required data
+    for sat1=1:num_satellites-1
+
+        for sat2=sat1+1:num_satellites
+            i=sat1;
+            j=sat2;
+            for x=1:2
+                % 10 Windows per pair
+                num_windows = 1;
+                for y=1:10
+                    while WindowsData.time(i,j,num_windows) < transfer_time && num_windows < length(WindowsData.time)
+                        num_windows = num_windows + 1;
+                    end
+                    if WindowsData.time(i,j,num_windows) > transfer_time && WindowsData.start(i,j,num_windows) > 0
+                            WindowsDataFirst.start(i,j,y) =  WindowsData.start(i,j,num_windows);
+                            WindowsDataFirst.end(i,j,y) = WindowsData.end(i,j,num_windows);
+                            WindowsDataFirst.time(i,j,y) =  WindowsData.time(i,j,num_windows);
+                            num_windows = num_windows + 1;
+                    end
                 end
+
+                i=sat2;
+                j=sat1;
+
+            end
+
+        end
+
+    end
+
+    % Path Solution
+
+    PathSolution1 = struct('sat_start', zeros(1, 1), 'sat_end', zeros(1, 1), 'start', zeros(1, 1), 'end', zeros(1, 1), 'total_time', zeros(1, 1));
+    PathSolution2 = struct('sat_start', zeros(num_satellites-2, 2), 'sat_end', zeros(num_satellites-2, 2), 'start', zeros(num_satellites-2, 2), 'end', zeros(num_satellites-2, 2), 'total_time', zeros(num_satellites-2, 2));
+    PathSolution3 = struct('sat_start', zeros((num_satellites-2)*((num_satellites-2)-1), 3), 'sat_end', zeros((num_satellites-2)*((num_satellites-2)-1), 3), 'start', zeros((num_satellites-2)*((num_satellites-2)-1), 3), 'end', zeros((num_satellites-2)*((num_satellites-2)-1), 3), 'total_time', zeros((num_satellites-2)*((num_satellites-2)-1), 3));
+
+    % One Jump Path
+    PathSolution1.sat_start(1,1) = start_sat;
+    PathSolution1.sat_end(1,1) = end_sat;
+    PathSolution1.start(1,1) = WindowsDataFirst.start(start_sat,end_sat,1);
+    PathSolution1.end(1,1) = WindowsDataFirst.start(start_sat,end_sat,1) + transfer_time;
+    PathSolution1.total_time(1,1) = PathSolution1.end(1,1) - start_time_unix;
+
+    % Two Jumps Path
+    if num_satellites > 2
+        index_count = 0;
+        for x=1:num_satellites
+            y = x;
+            while y == end_sat || y == start_sat
+                y = y+1;
+            end
+            if y > num_satellites
+            else
+                index_count = index_count + 1;
+                PathSolution2.sat_start(index_count,1) = start_sat;
+                PathSolution2.sat_end(index_count,1) = y;
+                PathSolution2.start(index_count,1) = WindowsDataFirst.start(start_sat,y,1);
+                PathSolution2.end(index_count,1) = WindowsDataFirst.start(start_sat,y,1) + transfer_time;
+                PathSolution2.total_time(index_count,1) = PathSolution2.end(index_count,1) - start_time_unix;
+
+                num_windows = 1;
+                k = num_windows;
+                while WindowsDataFirst.start(y,end_sat,num_windows) < PathSolution2.end(index_count,1) && num_windows < length(WindowsDataFirst.start)
+                    num_windows = num_windows + 1;
+                    k = num_windows;
+                end
+
+                PathSolution2.sat_start(index_count,2) = y;
+                PathSolution2.sat_end(index_count,2) = end_sat;
+                PathSolution2.start(index_count,2) = WindowsDataFirst.start(y,end_sat,k);
+                PathSolution2.end(index_count,2) = WindowsDataFirst.start(y,end_sat,k) + transfer_time;
+                PathSolution2.total_time(index_count,2) = PathSolution2.end(index_count,2) - start_time_unix;
             end
         end
     end
 
-    satellite_start_name = strcat(OrbitData.ID{start_sat},OrbitData.designation{start_sat});
-    satellite_end_name = strcat(OrbitData.ID{end_sat},OrbitData.designation{end_sat});
-    fprintf(sprintf('Quickest two-jump path from %s to %s is:\n',satellite_start_name,satellite_end_name)); % Command window print
-    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), sprintf('Quickest two-jump path from %s to %s is:',satellite_start_name,satellite_end_name)); % Log print
+    % Three Jumps Path
+    if num_satellites > 3
+        index_count = 0;
+        for x=1:num_satellites
+            y = x;
+            while y == end_sat || y == start_sat
+                y = y+1;
+            end
+            if y > num_satellites
+            else
+                for z=1:num_satellites
+                    q = z;
+                    while q == end_sat || q == start_sat || q == y
+                        q = q+1;
+                    end
+                    if q > num_satellites
+                    else
+                        index_count = index_count + 1;
+                        PathSolution3.sat_start(index_count,1) = start_sat;
+                        PathSolution3.sat_end(index_count,1) = y;
+                        PathSolution3.start(index_count,1) = WindowsDataFirst.start(start_sat,y,1);
+                        PathSolution3.end(index_count,1) = WindowsDataFirst.start(start_sat,y,1) + transfer_time;
+                        PathSolution3.total_time(index_count,1) = PathSolution3.end(index_count,1) - start_time_unix;
 
-    if quick_path2 == start_time_unix
-        disp('Path is not possible') % Command window print
-        fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Path is not possible'); % Log print
-    else
-        satellite1_name = strcat(OrbitData.ID{PathSolution2.sat_start(quick_path2_id,1)},OrbitData.designation{PathSolution2.sat_start(quick_path2_id,1)});
-        satellite2_name = strcat(OrbitData.ID{PathSolution2.sat_end(quick_path2_id,1)},OrbitData.designation{PathSolution2.sat_end(quick_path2_id,1)});
-        satellite3_name = strcat(OrbitData.ID{PathSolution2.sat_start(quick_path2_id,2)},OrbitData.designation{PathSolution2.sat_start(quick_path2_id,2)});
-        satellite4_name = strcat(OrbitData.ID{PathSolution2.sat_end(quick_path2_id,2)},OrbitData.designation{PathSolution2.sat_end(quick_path2_id,2)});
-        date1 = datestr(datetime(PathSolution2.start(quick_path2_id,1),'ConvertFrom','posixtime'));
-        date2 = datestr(datetime(PathSolution2.end(quick_path2_id,1),'ConvertFrom','posixtime'));
-        date3 = datestr(datetime(PathSolution2.start(quick_path2_id,2),'ConvertFrom','posixtime'));
-        date4 = datestr(datetime(PathSolution2.end(quick_path2_id,2),'ConvertFrom','posixtime'));
+                        num_windows=1;
+                        k = num_windows;
+                        while WindowsDataFirst.start(y,q,num_windows) < PathSolution3.end(index_count,1) && num_windows < length(WindowsDataFirst.start)
+                            num_windows = num_windows + 1;
+                            k = num_windows;
+                        end
 
-        fprintf(sprintf('First Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s\n', satellite1_name,...
-                        satellite2_name, date1, date2, num2str(PathSolution2.total_time(quick_path2_id,1)))); % Command window print
-        fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),... 
-                    sprintf('First Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',... 
-                    satellite1_name, satellite2_name, date1, date2, num2str(PathSolution2.total_time(quick_path2_id,1)))); % Log print
-        fprintf(sprintf('Second Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s\n', satellite3_name,...
-                        satellite4_name, date3, date4, num2str(PathSolution2.total_time(quick_path2_id,2)))); % Command window print
-        fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),...
-                    sprintf('Second Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',... 
-                    satellite3_name, satellite4_name, date3, date4, num2str(PathSolution2.total_time(quick_path2_id,2)))); % Log print
-    end
-end
+                        PathSolution3.sat_start(index_count,2) = y;
+                        PathSolution3.sat_end(index_count,2) = q;
+                        PathSolution3.start(index_count,2) = WindowsDataFirst.start(y,q,k);
+                        PathSolution3.end(index_count,2) = WindowsDataFirst.start(y,q,k) + transfer_time;
+                        PathSolution3.total_time(index_count,2) = PathSolution3.end(index_count,2) - start_time_unix;
 
-% Best three-jumps path
+                        num_windows=1;
+                        m = num_windows;
+                        while WindowsDataFirst.start(q,end_sat,num_windows) < PathSolution3.end(index_count,2) && num_windows < length(WindowsDataFirst.start)
+                            num_windows = num_windows + 1;
+                            m = num_windows;
+                        end
 
-if num_satellites > 3
-    quick_path3 = start_time_unix;
-    for i=1:length(PathSolution3.total_time)
-        if PathSolution3.total_time(i,1) > 0
-            if PathSolution3.total_time(i,2) > 0
-                if PathSolution3.total_time(i,3) > 0
-                    if PathSolution3.total_time(i,3) < quick_path3
-                        quick_path3 = PathSolution3.total_time(i,3);
-                        quick_path3_id = i;
+                        PathSolution3.sat_start(index_count,3) = q;
+                        PathSolution3.sat_end(index_count,3) = end_sat;
+                        PathSolution3.start(index_count,3) = WindowsDataFirst.start(q,end_sat,m);
+                        PathSolution3.end(index_count,3) = WindowsDataFirst.start(q,end_sat,m) + transfer_time;
+                        PathSolution3.total_time(index_count,3) = PathSolution3.end(index_count,3) - start_time_unix;
                     end
                 end
             end
         end
     end
 
-    satellite_start_name = strcat(OrbitData.ID{start_sat},OrbitData.designation{start_sat});
-    satellite_end_name = strcat(OrbitData.ID{end_sat},OrbitData.designation{end_sat});
-    fprintf(sprintf('Quickest three-jump path from %s to %s is:\n',satellite_start_name,satellite_end_name)); % Command window
-    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), sprintf('Quickest three-jump path from %s to %s is:',satellite_start_name,satellite_end_name)); % Log print
+    % Best one jump path
+    satellite1_name = strcat(OrbitData.ID{PathSolution1.sat_start},OrbitData.designation{PathSolution1.sat_start});
+    satellite2_name = strcat(OrbitData.ID{PathSolution1.sat_end},OrbitData.designation{PathSolution1.sat_end});
+    fprintf(sprintf('One-jump path from %s to %s is:\n',satellite1_name,satellite2_name)); % Command window print
+    fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), sprintf('One-jump path from %s to %s is:',satellite1_name,satellite2_name)); % Log print
+    date1 = datestr(datetime(PathSolution1.start,'ConvertFrom','posixtime'));
+    date2 = datestr(datetime(PathSolution1.end,'ConvertFrom','posixtime'));
 
-    if quick_path3 == start_time_unix
+    if PathSolution1.total_time <= 0
         disp('Path is not possible') % Command window print
         fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Path is not possible'); % Log print
     else
-        satellite1_name = strcat(OrbitData.ID{PathSolution3.sat_start(quick_path3_id,1)},OrbitData.designation{PathSolution3.sat_start(quick_path3_id,1)});
-        satellite2_name = strcat(OrbitData.ID{PathSolution3.sat_end(quick_path3_id,1)},OrbitData.designation{PathSolution3.sat_end(quick_path3_id,1)});
-        satellite3_name = strcat(OrbitData.ID{PathSolution3.sat_start(quick_path3_id,2)},OrbitData.designation{PathSolution3.sat_start(quick_path3_id,2)});
-        satellite4_name = strcat(OrbitData.ID{PathSolution3.sat_end(quick_path3_id,2)},OrbitData.designation{PathSolution3.sat_end(quick_path3_id,2)});
-        satellite5_name = strcat(OrbitData.ID{PathSolution3.sat_start(quick_path3_id,3)},OrbitData.designation{PathSolution3.sat_start(quick_path3_id,3)});
-        satellite6_name = strcat(OrbitData.ID{PathSolution3.sat_end(quick_path3_id,3)},OrbitData.designation{PathSolution3.sat_end(quick_path3_id,3)});
-        date1 = datestr(datetime(PathSolution3.start(quick_path3_id,1),'ConvertFrom','posixtime'));
-        date2 = datestr(datetime(PathSolution3.end(quick_path3_id,1),'ConvertFrom','posixtime'));
-        date3 = datestr(datetime(PathSolution3.start(quick_path3_id,2),'ConvertFrom','posixtime'));
-        date4 = datestr(datetime(PathSolution3.end(quick_path3_id,2),'ConvertFrom','posixtime'));
-        date5 = datestr(datetime(PathSolution3.start(quick_path3_id,3),'ConvertFrom','posixtime'));
-        date6 = datestr(datetime(PathSolution3.end(quick_path3_id,3),'ConvertFrom','posixtime'));
+        fprintf(sprintf('Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s\n', satellite1_name,...
+                    satellite2_name, date1, date2, num2str(PathSolution1.total_time))); % Command window print
+        fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),...
+                sprintf('Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',... 
+                satellite1_name, satellite2_name, date1, date2, num2str(PathSolution1.total_time))); % Log print
+    end
 
-        fprintf(sprintf('First Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s\n', satellite1_name,...
-                        satellite2_name, date1, date2, num2str(PathSolution3.total_time(quick_path3_id,1)))); % Command winodow print
-        fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),...
-                    sprintf('First Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',...
-                    satellite1_name, satellite2_name, date1, date2, num2str(PathSolution3.total_time(quick_path3_id,1)))); % Log print
-        fprintf(sprintf('Second Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s\n', satellite3_name,...
-                        satellite4_name, date3, date4, num2str(PathSolution3.total_time(quick_path3_id,2)))); % Command winodow print
-        fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),...
-                    sprintf('Second Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',...
-                    satellite3_name, satellite4_name, date3, date4, num2str(PathSolution3.total_time(quick_path3_id,2)))); % Log print
-        fprintf(sprintf('Third Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s\n', satellite5_name,...
-                        satellite6_name, date5, date6, num2str(PathSolution3.total_time(quick_path3_id,3)))); % Command winodow print
-        fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),...
-                    sprintf('Third Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',...
-                    satellite5_name, satellite6_name, date5, date6, num2str(PathSolution3.total_time(quick_path3_id,3)))); % Log print
+    % Best two-jumps path
+    if num_satellites > 2
+        quick_path2 = start_time_unix;
+        for i=1:length(PathSolution2.total_time)
+            if PathSolution2.total_time(i,1) > 0
+                if PathSolution2.total_time(i,2) > 0
+                    if PathSolution2.total_time(i,2) < quick_path2
+                        quick_path2 = PathSolution2.total_time(i,2);
+                        quick_path2_id = i;
+                    end
+                end
+            end
+        end
+
+        satellite_start_name = strcat(OrbitData.ID{start_sat},OrbitData.designation{start_sat});
+        satellite_end_name = strcat(OrbitData.ID{end_sat},OrbitData.designation{end_sat});
+        fprintf(sprintf('Quickest two-jump path from %s to %s is:\n',satellite_start_name,satellite_end_name)); % Command window print
+        fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), sprintf('Quickest two-jump path from %s to %s is:',satellite_start_name,satellite_end_name)); % Log print
+
+        if quick_path2 == start_time_unix
+            disp('Path is not possible') % Command window print
+            fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Path is not possible'); % Log print
+        else
+            satellite1_name = strcat(OrbitData.ID{PathSolution2.sat_start(quick_path2_id,1)},OrbitData.designation{PathSolution2.sat_start(quick_path2_id,1)});
+            satellite2_name = strcat(OrbitData.ID{PathSolution2.sat_end(quick_path2_id,1)},OrbitData.designation{PathSolution2.sat_end(quick_path2_id,1)});
+            satellite3_name = strcat(OrbitData.ID{PathSolution2.sat_start(quick_path2_id,2)},OrbitData.designation{PathSolution2.sat_start(quick_path2_id,2)});
+            satellite4_name = strcat(OrbitData.ID{PathSolution2.sat_end(quick_path2_id,2)},OrbitData.designation{PathSolution2.sat_end(quick_path2_id,2)});
+            date1 = datestr(datetime(PathSolution2.start(quick_path2_id,1),'ConvertFrom','posixtime'));
+            date2 = datestr(datetime(PathSolution2.end(quick_path2_id,1),'ConvertFrom','posixtime'));
+            date3 = datestr(datetime(PathSolution2.start(quick_path2_id,2),'ConvertFrom','posixtime'));
+            date4 = datestr(datetime(PathSolution2.end(quick_path2_id,2),'ConvertFrom','posixtime'));
+
+            fprintf(sprintf('First Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s\n', satellite1_name,...
+                            satellite2_name, date1, date2, num2str(PathSolution2.total_time(quick_path2_id,1)))); % Command window print
+            fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),... 
+                        sprintf('First Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',... 
+                        satellite1_name, satellite2_name, date1, date2, num2str(PathSolution2.total_time(quick_path2_id,1)))); % Log print
+            fprintf(sprintf('Second Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s\n', satellite3_name,...
+                            satellite4_name, date3, date4, num2str(PathSolution2.total_time(quick_path2_id,2)))); % Command window print
+            fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),...
+                        sprintf('Second Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',... 
+                        satellite3_name, satellite4_name, date3, date4, num2str(PathSolution2.total_time(quick_path2_id,2)))); % Log print
+        end
+    end
+
+    % Best three-jumps path
+
+    if num_satellites > 3
+        quick_path3 = start_time_unix;
+        for i=1:length(PathSolution3.total_time)
+            if PathSolution3.total_time(i,1) > 0
+                if PathSolution3.total_time(i,2) > 0
+                    if PathSolution3.total_time(i,3) > 0
+                        if PathSolution3.total_time(i,3) < quick_path3
+                            quick_path3 = PathSolution3.total_time(i,3);
+                            quick_path3_id = i;
+                        end
+                    end
+                end
+            end
+        end
+
+        satellite_start_name = strcat(OrbitData.ID{start_sat},OrbitData.designation{start_sat});
+        satellite_end_name = strcat(OrbitData.ID{end_sat},OrbitData.designation{end_sat});
+        fprintf(sprintf('Quickest three-jump path from %s to %s is:\n',satellite_start_name,satellite_end_name)); % Command window
+        fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), sprintf('Quickest three-jump path from %s to %s is:',satellite_start_name,satellite_end_name)); % Log print
+
+        if quick_path3 == start_time_unix
+            disp('Path is not possible') % Command window print
+            fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')), 'Path is not possible'); % Log print
+        else
+            satellite1_name = strcat(OrbitData.ID{PathSolution3.sat_start(quick_path3_id,1)},OrbitData.designation{PathSolution3.sat_start(quick_path3_id,1)});
+            satellite2_name = strcat(OrbitData.ID{PathSolution3.sat_end(quick_path3_id,1)},OrbitData.designation{PathSolution3.sat_end(quick_path3_id,1)});
+            satellite3_name = strcat(OrbitData.ID{PathSolution3.sat_start(quick_path3_id,2)},OrbitData.designation{PathSolution3.sat_start(quick_path3_id,2)});
+            satellite4_name = strcat(OrbitData.ID{PathSolution3.sat_end(quick_path3_id,2)},OrbitData.designation{PathSolution3.sat_end(quick_path3_id,2)});
+            satellite5_name = strcat(OrbitData.ID{PathSolution3.sat_start(quick_path3_id,3)},OrbitData.designation{PathSolution3.sat_start(quick_path3_id,3)});
+            satellite6_name = strcat(OrbitData.ID{PathSolution3.sat_end(quick_path3_id,3)},OrbitData.designation{PathSolution3.sat_end(quick_path3_id,3)});
+            date1 = datestr(datetime(PathSolution3.start(quick_path3_id,1),'ConvertFrom','posixtime'));
+            date2 = datestr(datetime(PathSolution3.end(quick_path3_id,1),'ConvertFrom','posixtime'));
+            date3 = datestr(datetime(PathSolution3.start(quick_path3_id,2),'ConvertFrom','posixtime'));
+            date4 = datestr(datetime(PathSolution3.end(quick_path3_id,2),'ConvertFrom','posixtime'));
+            date5 = datestr(datetime(PathSolution3.start(quick_path3_id,3),'ConvertFrom','posixtime'));
+            date6 = datestr(datetime(PathSolution3.end(quick_path3_id,3),'ConvertFrom','posixtime'));
+
+            fprintf(sprintf('First Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s\n', satellite1_name,...
+                            satellite2_name, date1, date2, num2str(PathSolution3.total_time(quick_path3_id,1)))); % Command winodow print
+            fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),...
+                        sprintf('First Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',...
+                        satellite1_name, satellite2_name, date1, date2, num2str(PathSolution3.total_time(quick_path3_id,1)))); % Log print
+            fprintf(sprintf('Second Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s\n', satellite3_name,...
+                            satellite4_name, date3, date4, num2str(PathSolution3.total_time(quick_path3_id,2)))); % Command winodow print
+            fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),...
+                        sprintf('Second Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',...
+                        satellite3_name, satellite4_name, date3, date4, num2str(PathSolution3.total_time(quick_path3_id,2)))); % Log print
+            fprintf(sprintf('Third Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s\n', satellite5_name,...
+                            satellite6_name, date5, date6, num2str(PathSolution3.total_time(quick_path3_id,3)))); % Command winodow print
+            fprintf(fid_log, '%s: %s\n', datestr(datetime('now', 'TimeZone', 'UTC')),...
+                        sprintf('Third Jump. Sender Satellite: %s - Receiver Satellite: %s - Start date time %s - End date time: %s - Total time since Simulation start: %s',...
+                        satellite5_name, satellite6_name, date5, date6, num2str(PathSolution3.total_time(quick_path3_id,3)))); % Log print
+        end
     end
 end
 
