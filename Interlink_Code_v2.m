@@ -4,8 +4,8 @@ close all
 clc
 
 % STUDY OF THE INTERLINK BETWEEN SMALL SATELLITES IN A CONSTELLATION
-% Author: David Puig Puig
-% Tutor: Miquel Sureda Anfres
+% Author: David Puig Puig - david.puig.puig@estudiant.upc.edu
+% Director: Miquel Sureda Anfres
 % ESEIAAT - UPC
 
 % Visual contact for two satellites analysis
@@ -16,7 +16,7 @@ clc
 
 % Introduction and information
 
-input_tle_list = {'Author: David Puig', 'Tutor: Miquel Sureda', 'ESEIAAT - UPC'};
+input_tle_list = {'Author: David Puig', 'Director: Miquel Sureda', 'ESEIAAT - UPC'};
 [indx,tf] = listdlg('ListString',input_tle_list,'Name','InterLink','PromptString','This tool is used to analyse visibility windows in satellite constellations',...
                     'SelectionMode','single','ListSize',[500,300],'OKString','Next','CancelString','Quit');
 
