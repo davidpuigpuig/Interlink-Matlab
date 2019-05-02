@@ -428,7 +428,7 @@ if indx == 1
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
     
-    time_divisions = 10000; %4320 is every 10 seconds for a 12h simulation
+    time_divisions = 1000; %4320 is every 10 seconds for a 12h simulation
      
 else
     prompt = {'Simulation start:', 'Simulation end:', 'Time divisons (steps):'};
