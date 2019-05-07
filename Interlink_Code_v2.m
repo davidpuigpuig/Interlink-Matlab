@@ -1088,7 +1088,7 @@ else
 
                 num_windows = 1;
                 k = num_windows;
-                while WindowsDataFirst.start(y,end_sat,num_windows) < PathSolution2.end(index_count,1) && num_windows <= 10
+                while num_windows <= 10 && WindowsDataFirst.start(y,end_sat,num_windows) < PathSolution2.end(index_count,1)
                     num_windows = num_windows + 1;
                     k = num_windows;
                 end
@@ -1128,7 +1128,7 @@ else
 
                         num_windows=1;
                         k = num_windows;
-                        while WindowsDataFirst.start(y,q,num_windows) < PathSolution3.end(index_count,1) && num_windows <= 10
+                        while num_windows <= 10 && WindowsDataFirst.start(y,q,num_windows) < PathSolution3.end(index_count,1)
                             num_windows = num_windows + 1;
                             k = num_windows;
                         end
@@ -1141,7 +1141,7 @@ else
 
                         num_windows=1;
                         m = num_windows;
-                        while WindowsDataFirst.start(q,end_sat,num_windows) < PathSolution3.end(index_count,2) && num_windows <= 10
+                        while num_windows <= 10 && WindowsDataFirst.start(q,end_sat,num_windows) < PathSolution3.end(index_count,2)
                             num_windows = num_windows + 1;
                             m = num_windows;
                         end
