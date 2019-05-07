@@ -412,7 +412,7 @@ disp('Starting InterLink...')
 
 if indx == 1
     % Simulation Parameters
-    start_time = '22-May-2008 12:00:00';
+    start_time = '07-May-2019 12:00:00';
     %start_time = datetime('now', 'TimeZone', 'UTC');
     
     start_time_unix = posixtime(datetime(start_time));
@@ -420,7 +420,7 @@ if indx == 1
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     
-    end_time = '23-May-2008 00:00:00';
+    end_time = '08-May-2019 12:00:00';
     %end_time = datetime('now', 'TimeZone', 'UTC') + days(1);
     
     end_time_unix = posixtime(datetime(end_time));
@@ -1088,7 +1088,7 @@ else
 
                 num_windows = 1;
                 k = num_windows;
-                while WindowsDataFirst.start(y,end_sat,num_windows) < PathSolution2.end(index_count,1) && num_windows < length(WindowsDataFirst.start)
+                while WindowsDataFirst.start(y,end_sat,num_windows) < PathSolution2.end(index_count,1) && num_windows <= 10
                     num_windows = num_windows + 1;
                     k = num_windows;
                 end
@@ -1128,7 +1128,7 @@ else
 
                         num_windows=1;
                         k = num_windows;
-                        while WindowsDataFirst.start(y,q,num_windows) < PathSolution3.end(index_count,1) && num_windows < length(WindowsDataFirst.start)
+                        while WindowsDataFirst.start(y,q,num_windows) < PathSolution3.end(index_count,1) && num_windows <= 10
                             num_windows = num_windows + 1;
                             k = num_windows;
                         end
@@ -1141,7 +1141,7 @@ else
 
                         num_windows=1;
                         m = num_windows;
-                        while WindowsDataFirst.start(q,end_sat,num_windows) < PathSolution3.end(index_count,2) && num_windows < length(WindowsDataFirst.start)
+                        while WindowsDataFirst.start(q,end_sat,num_windows) < PathSolution3.end(index_count,2) && num_windows <= 10
                             num_windows = num_windows + 1;
                             m = num_windows;
                         end
