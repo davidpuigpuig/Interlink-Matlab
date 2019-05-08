@@ -1088,7 +1088,7 @@ else
 
                 num_windows = 1;
                 k = num_windows;
-                while num_windows <= 10 && WindowsDataFirst.start(y,end_sat,num_windows) < PathSolution2.end(index_count,1)
+                while num_windows <= 10 && WindowsDataFirst.end(y,end_sat,num_windows)-transfer_time < PathSolution2.end(index_count,1)
                     num_windows = num_windows + 1;
                     k = num_windows;
                 end
@@ -1096,8 +1096,12 @@ else
                 else
                     PathSolution2.sat_start(index_count,2) = y;
                     PathSolution2.sat_end(index_count,2) = end_sat;
-                    PathSolution2.start(index_count,2) = WindowsDataFirst.start(y,end_sat,k);
-                    PathSolution2.end(index_count,2) = WindowsDataFirst.start(y,end_sat,k) + transfer_time;
+                    if PathSolution2.end(index_count,1) < WindowsDataFirst.start(y,end_sat,k)
+                        PathSolution2.start(index_count,2) = WindowsDataFirst.start(y,end_sat,k);
+                    else
+                        PathSolution2.start(index_count,2) = PathSolution2.end(index_count,1);
+                    end
+                    PathSolution2.end(index_count,2) = PathSolution2.start(index_count,2) + transfer_time;
                     PathSolution2.total_time(index_count,2) = PathSolution2.end(index_count,2) - start_time_unix;
                 end
             end
@@ -1130,7 +1134,7 @@ else
 
                         num_windows=1;
                         k = num_windows;
-                        while num_windows <= 10 && WindowsDataFirst.start(y,q,num_windows) < PathSolution3.end(index_count,1)
+                        while num_windows <= 10 && WindowsDataFirst.end(y,q,num_windows)-transfer_time < PathSolution3.end(index_count,1)
                             num_windows = num_windows + 1;
                             k = num_windows;
                         end
@@ -1138,14 +1142,18 @@ else
                         else                        
                             PathSolution3.sat_start(index_count,2) = y;
                             PathSolution3.sat_end(index_count,2) = q;
-                            PathSolution3.start(index_count,2) = WindowsDataFirst.start(y,q,k);
-                            PathSolution3.end(index_count,2) = WindowsDataFirst.start(y,q,k) + transfer_time;
+                            if PathSolution3.end(index_count,1) < WindowsDataFirst.start(y,q,k)
+                                PathSolution3.start(index_count,2) = WindowsDataFirst.start(y,q,k);
+                            else
+                                PathSolution3.start(index_count,2) = PathSolution3.end(index_count,1);
+                            end
+                            PathSolution3.end(index_count,2) = PathSolution3.start(index_count,2) + transfer_time;
                             PathSolution3.total_time(index_count,2) = PathSolution3.end(index_count,2) - start_time_unix;
                         end
 
                         num_windows=1;
                         m = num_windows;
-                        while num_windows <= 10 && WindowsDataFirst.start(q,end_sat,num_windows) < PathSolution3.end(index_count,2)
+                        while num_windows <= 10 && WindowsDataFirst.end(q,end_sat,num_windows)-transfer_time < PathSolution3.end(index_count,2)
                             num_windows = num_windows + 1;
                             m = num_windows;
                         end
@@ -1153,8 +1161,12 @@ else
                         else
                             PathSolution3.sat_start(index_count,3) = q;
                             PathSolution3.sat_end(index_count,3) = end_sat;
-                            PathSolution3.start(index_count,3) = WindowsDataFirst.start(q,end_sat,m);
-                            PathSolution3.end(index_count,3) = WindowsDataFirst.start(q,end_sat,m) + transfer_time;
+                            if PathSolution3.end(index_count,2) < WindowsDataFirst.start(q,end_sat,m)
+                                PathSolution3.start(index_count,3) = WindowsDataFirst.start(q,end_sat,m);
+                            else
+                                PathSolution3.start(index_count,3) = PathSolution3.end(index_count,2);
+                            end                            
+                            PathSolution3.end(index_count,3) = PathSolution3.start(index_count,3) + transfer_time;
                             PathSolution3.total_time(index_count,3) = PathSolution3.end(index_count,3) - start_time_unix;
                         end
                     end
