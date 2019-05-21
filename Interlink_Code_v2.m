@@ -412,23 +412,23 @@ disp('Starting InterLink...')
 
 if indx == 1
     % Simulation Parameters
-    start_time = '07-May-2019 12:00:00';
-    %start_time = datetime('now', 'TimeZone', 'UTC');
+    %start_time = '07-May-2019 12:00:00';
+    start_time = datetime('now', 'TimeZone', 'UTC');
     
     start_time_unix = posixtime(datetime(start_time));
     fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);                       % Command window print
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     
-    end_time = '08-May-2019 12:00:00';
-    %end_time = datetime('now', 'TimeZone', 'UTC') + days(1);
+    %end_time = '08-May-2019 12:00:00';
+    end_time = datetime('now', 'TimeZone', 'UTC') + days(1);
     
     end_time_unix = posixtime(datetime(end_time));
     fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
     
-    time_divisions = 1000; %4320 is every 10 seconds for a 12h simulation
+    time_divisions = 500; %4320 is every 10 seconds for a 12h simulation
      
 else
     prompt = {'Simulation start:', 'Simulation end:', 'Time divisons (steps):'};
@@ -986,7 +986,8 @@ elseif indx == 1
     lgd2 = legend();
 end
 
-%% Pathfinder Algorithm 
+%% Pathfinder Algorithm
+pause(2)
 path_tle_list = cell(1,num_satellites);
 
 for i=1:num_satellites
