@@ -13,11 +13,11 @@ clc
 % Reminder: All times are in UTC
 
 %% Debugging
-extra_menus = 0;
-sgp4_enabled = 0;
-csv_module = 0;
-plot_module = 0;
-pathfinding_module = 0;
+extra_menus = 1;
+sgp4_enabled = 1;
+csv_module = 1;
+plot_module = 1;
+pathfinding_module = 1;
 
 %% Menu module
 if extra_menus == 1
@@ -421,23 +421,23 @@ disp('Starting InterLink...')
 
 if indx == 1
     % Simulation Parameters
-    %start_time = '22-May-2008 12:00:00';
     start_time = datetime('now', 'TimeZone', 'UTC');
+    %start_time = datetime('2008-05-22 12:00:00','InputFormat','yyyy-MM-dd HH:mm:ss');
     
     start_time_unix = posixtime(datetime(start_time));
     fprintf('Conversion of the simulation start time: %s is %d in Unix time\n', start_time, start_time_unix);                       % Command window print
     start_time_to_log = sprintf('Conversion of the simulation start time: %s is %d in Unix time', start_time, start_time_unix);
     t = start_time_unix;                                                                                                            % Start simulation time in Unix time [s]
     
-    %end_time = '23-May-2008 12:00:00';
     end_time = datetime('now', 'TimeZone', 'UTC') + days(1);
+    %end_time = datetime('2008-05-23 12:00:00','InputFormat','yyyy-MM-dd HH:mm:ss');
     
     end_time_unix = posixtime(datetime(end_time));
     fprintf('Conversion of the simulation end time: %s is %d in Unix time\n', end_time, end_time_unix);                             % Command window print
     end_time_to_log = sprintf('Conversion of the simulation end time: %s is %d in Unix time', end_time, end_time_unix);
     t_end = end_time_unix;                                                                                                          % End of simulation time in Unix time [s]
     
-    time_divisions = 10000; %4320 is every 10 seconds for a 12h simulation
+    time_divisions = 4320; %4320 is every 10 seconds for a 12h simulation
      
 else
     prompt = {'Simulation start:', 'Simulation end:', 'Time divisons (steps):'};
@@ -503,9 +503,9 @@ for i=1:num_satellites
     parameter = zeros(1, num_satellites);                                   % Semi-parameter of the orbit [m]
     Rsimple1 = 0;                                                           % Visibility parameter [m]
     Rsimple2 = 0;                                                           % Visibility parameter [m]
-    Rcomplex = zeros(num_steps, num_pairs);                                 % Visibility parameter [m]
+    Rcomplex = 0;                                                           % Visibility parameter [m]
     Rangle = 0;                                                             % Visibility parameter [m]
-    Rv = 0;                                                                 % Distance from earth to satellite-satellite line [m]
+    Rv = zeros(num_steps, num_pairs);                                       % Distance from earth (+ extra distamce) to satellite-satellite line [m]
     csv_data = cell(num_steps, 27, 2, num_pairs);                           % Array of matrix to store relevant data
     WindowsData = struct('start', zeros(num_satellites, num_satellites, 1000), 'end', zeros(num_satellites, num_satellites, 1000), 'time', zeros(num_satellites, num_satellites, 1000));
     WindowsDataFirst = struct('start', zeros(num_satellites, num_satellites, 10), 'end', zeros(num_satellites, num_satellites, 10), 'time', zeros(num_satellites, num_satellites, 10));
@@ -595,7 +595,7 @@ addpath([pwd, '\TLE Plotter']);
 simStart = start_time;
 
 % Compute sidereal time
-GMST = utc2gmst(datevec(simStart)); % [rad]
+GMST = utc2gmst(simStart); % [rad]
 
 % Create a time vector
 tSim = linspace(start_time_unix, end_time_unix, num_steps);
@@ -751,12 +751,12 @@ for sat1=1:num_satellites-1
 
             r1dotr2complex = (parameter(sat1)*parameter(sat2)/((1+OrbitDataProp.e(sat1)*cos(f(sat1)))*(1+OrbitDataProp.e(sat2)*cos(f(sat2)))))* ...
                              (D1*cos(f(sat2))*(cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1)))+D2*sin(f(sat2))*(cos_psi*cos(f(sat1))+sin_psi*sin(f(sat1))));
-            Rcomplex(step_count, num_pairs) = parameter(sat1)^2 * parameter(sat2)^2 * ( D1*cos(f(sat2))*(cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1))) + ...
+            Rcomplex = parameter(sat1)^2 * parameter(sat2)^2 * ( D1*cos(f(sat2))*(cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1))) + ...
                                                 D2*sin(f(sat2))*(cos_psi*cos(f(sat1))+sin_psi*sin(f(sat1))) )^2 - parameter(sat1)^2*parameter(sat2)^2 + S^2*( parameter(sat1)^2* ...
                                                 (1+OrbitDataProp.e(sat2)*cos(f(sat2)))^2 + parameter(sat2)^2*(1+OrbitDataProp.e(sat1)*cos(f(sat1)))^2 ) - 2*S^2*parameter(sat1)*parameter(sat2)* ...
                                                 ( D1*cos(f(sat2))* ( cos_gamma*cos(f(sat1))+sin_gamma*sin(f(sat1)) ) + D2*sin(f(sat2))* ( cos_psi*cos(f(sat1))+sin_psi*sin(f(sat1)) ) ) * ...
                                                 (1+OrbitDataProp.e(sat1)*cos(f(sat1))) * (1+OrbitDataProp.e(sat2)*cos(f(sat2)));
-            Rv = sqrt((r(sat1)^2 * r(sat2)^2 - r1dotr2complex^2)/(r(sat1)^2 + r(sat2)^2 - 2*r1dotr2complex)) - body_radius;
+            Rv(step_count, num_pairs) = sqrt((r(sat1)^2 * r(sat2)^2 - r1dotr2complex^2)/(r(sat1)^2 + r(sat2)^2 - 2*r1dotr2complex)) - body_radius;
 
             % Step 9: Print Results for the given epoch time 
             pair_result = 'The result for %s%s and %s%s at %s is %d ';
@@ -765,10 +765,10 @@ for sat1=1:num_satellites-1
             
             t_todatetime = datetime(t, 'ConvertFrom', 'posixtime');
 
-            result_to_log = sprintf(pair_result, OrbitData.ID{sat1}, OrbitData.designation{sat1}, OrbitData.ID{sat2}, OrbitData.designation{sat2}, t_todatetime, Rcomplex(step_count, num_pairs));
+            result_to_log = sprintf(pair_result, OrbitData.ID{sat1}, OrbitData.designation{sat1}, OrbitData.ID{sat2}, OrbitData.designation{sat2}, t_todatetime, Rv(step_count, num_pairs));
             fprintf(result_to_log); % Command window print
 
-            if Rcomplex(step_count, num_pairs) < 0
+            if Rv(step_count, num_pairs) > 0
                 disp(visibility); % Command window print
                 fprintf(fid_log, '%s: %s%s\n', datestr(datetime('now', 'TimeZone', 'UTC')), result_to_log, visibility); % Appending visibility analysis result to log file
             else
@@ -777,13 +777,13 @@ for sat1=1:num_satellites-1
             end
             
             % Pathfinder feed
-            if Rcomplex(step_count,num_pairs) < 0 && (step_count == 1 || Rcomplex(step_count-1,num_pairs) >= 0)
+            if Rv(step_count,num_pairs) > 0 && (step_count == 1 || Rv(step_count-1,num_pairs) <= 0)
                 num_windows = num_windows + 1;
                 WindowsData.start(sat1,sat2,num_windows) = t;
                 WindowsData.start(sat2,sat1,num_windows) = WindowsData.start(sat1,sat2,num_windows);
             end
             if step_count > 1
-                if Rcomplex(step_count,num_pairs) >= 0 && Rcomplex(step_count-1,num_pairs) < 0
+                if Rv(step_count,num_pairs) <= 0 && Rv(step_count-1,num_pairs) > 0
                     WindowsData.end(sat1,sat2,num_windows) = t;
                     WindowsData.time(sat1,sat2,num_windows) = t-WindowsData.start(sat1,sat2,num_windows);
                     WindowsData.end(sat2,sat1,num_windows) = WindowsData.end(sat1,sat2,num_windows);
@@ -791,7 +791,7 @@ for sat1=1:num_satellites-1
                 end
             end
             if step_count > 1
-                if Rcomplex(step_count,num_pairs) < 0 && Rcomplex(step_count-1,num_pairs) < 0 && step_count == num_steps
+                if Rv(step_count,num_pairs) > 0 && Rv(step_count-1,num_pairs) > 0 && step_count == num_steps
                     WindowsData.end(sat1,sat2,num_windows) = t;
                     WindowsData.time(sat1,sat2,num_windows) = t-WindowsData.start(sat1,sat2,num_windows);
                     WindowsData.end(sat2,sat1,num_windows) = WindowsData.end(sat1,sat2,num_windows);
@@ -810,10 +810,10 @@ for sat1=1:num_satellites-1
             csv_data{step_count,5,sat2,num_pairs} = strcat(OrbitData.ID{sat1},OrbitData.designation{sat1});
             csv_data{step_count,6,sat2,num_pairs} = strcat(OrbitData.ID{sat2},OrbitData.designation{sat2});
                           
-            csv_data{step_count,9,sat1,num_pairs} = Rcomplex(step_count,num_pairs);
-            csv_data{step_count,10,sat1,num_pairs} = Rv;        
-            csv_data{step_count,9,sat2,num_pairs} = Rcomplex(step_count,num_pairs);
-            csv_data{step_count,10,sat2,num_pairs} = Rv;            
+            csv_data{step_count,9,sat1,num_pairs} = Rcomplex;
+            csv_data{step_count,10,sat1,num_pairs} = Rv(step_count,num_pairs);        
+            csv_data{step_count,9,sat2,num_pairs} = Rcomplex;
+            csv_data{step_count,10,sat2,num_pairs} = Rv(step_count,num_pairs);            
             
             step_count = step_count + 1;
 
@@ -951,13 +951,13 @@ if plot_module == 1
                 for t=1:step_count-1
                         i = sat1;
                         for x=1:2
-                            if Rcomplex(t, num_pairs) < 0 && i == sat1
+                            if Rv(t, num_pairs) > 0 && i == sat1
                                 curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255, 'DisplayName', 'Visibility', 'HandleVisibility', 'on'); % Green color
-                            elseif Rcomplex(t, num_pairs) >= 0 && i == sat1
+                            elseif Rv(t, num_pairs) <= 0 && i == sat1
                                 curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255, 'DisplayName', 'Non-visibility', 'HandleVisibility', 'on'); % Red color
-                            elseif Rcomplex(t, num_pairs) < 0 && i == sat2
+                            elseif Rv(t, num_pairs) > 0 && i == sat2
                                 curve = animatedline('LineWidth',2,'color', [100, 255, 110] / 255, 'DisplayName', 'Visibility', 'HandleVisibility', 'off'); % Green color
-                            elseif Rcomplex(t, num_pairs) >= 0 && i == sat2
+                            elseif Rv(t, num_pairs) <= 0 && i == sat2
                                 curve = animatedline('LineWidth',2,'color', [225, 90, 90] / 255, 'DisplayName', 'Non-visibility', 'HandleVisibility', 'off'); % Red color
                             end
                             if i == sat1
